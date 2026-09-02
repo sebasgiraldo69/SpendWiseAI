@@ -77,3 +77,29 @@ Debe quedar claro que el modelo no calcula totales finales: el codigo los recalc
 No basta con 5/5. Deben mostrar que el sistema sigue estable con casos financieros incomodos.
 <!-- MAKERS_REVIEW_2026_08_27_END -->
 
+
+<!-- MAKERS_CODE_ARCH_REVIEW_2026_09_01_START -->
+## Revision de codigo y arquitectura - 2026-09-01
+
+### Lectura docente
+
+- Sebastian hizo buen avance separando calculo financiero de extraccion por IA.
+- No se detecto docs/arquitectura.md.
+- Falta evidencia reciente y falta aporte visible de Miguel Angel.
+- El riesgo principal es financiero: salidas con numeros incorrectos que parecen razonables.
+
+### Revision de principios
+
+- Bien: no todo debe decidirlo el LLM; los calculos deben ser deterministas.
+- Falta: arquitectura que muestre extractor, normalizador, calculadora, validador y salida.
+- Falta: ampliar casos dificiles mas alla del set inicial.
+
+### Pendiente de equipo
+
+Crear docs/arquitectura.md y agregar casos de duplicados, saldo negativo, ingresos faltantes y categorias ambiguas.
+
+### Pendiente por poca evidencia individual
+
+Miguel Angel debe dejar un commit propio con evals, resultados o una validacion financiera concreta.
+<!-- MAKERS_CODE_ARCH_REVIEW_2026_09_01_END -->
+
