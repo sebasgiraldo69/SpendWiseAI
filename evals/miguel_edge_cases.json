@@ -1,0 +1,38 @@
+[
+  {
+    "id": "same_amount_duplicate_transport",
+    "input": "Ingreso: 1.800.000 COP\nTaxi aeropuerto: 75.000 COP\nTaxi aeropuerto: 75.000 COP",
+    "expected_guardrail": "Solicita confirmar si los dos taxis son cargos distintos antes de sumarlos.",
+    "why_it_matters": "Dos líneas idénticas pueden ser una duplicación de extracción o dos compras reales."
+  },
+  {
+    "id": "ambiguous_category_transfer",
+    "input": "Ingreso: 2.400.000 COP\nTransferencia a Laura: 180.000 COP",
+    "expected_guardrail": "Solicita aclarar el propósito antes de convertir la transferencia en una categoría de gasto.",
+    "why_it_matters": "El texto no permite distinguir préstamo, pago compartido o gasto personal."
+  },
+  {
+    "id": "zero_income_with_expense",
+    "input": "Ingreso: 0 COP\nMercado: 210.000 COP",
+    "expected_guardrail": "No calcula porcentaje; explica que no hay un ingreso positivo para comparar.",
+    "why_it_matters": "Evita división por cero y porcentajes engañosos."
+  },
+  {
+    "id": "refund_requires_review",
+    "input": "Ingreso: 2.000.000 COP\nDevolución de compra: -95.000 COP\nMercado: 320.000 COP",
+    "expected_guardrail": "No trata automáticamente una devolución como gasto negativo; solicita confirmación o un tipo de movimiento explícito.",
+    "why_it_matters": "Las devoluciones necesitan reglas contables diferentes a un gasto ordinario."
+  },
+  {
+    "id": "unknown_category_cash_withdrawal",
+    "input": "Ingreso: 1.600.000 COP\nRetiro en cajero: 200.000 COP",
+    "expected_guardrail": "Marca la categoría como ambigua y no inventa el destino del efectivo.",
+    "why_it_matters": "Retirar efectivo no informa por sí solo en qué se gastó el dinero."
+  },
+  {
+    "id": "malformed_amount",
+    "input": "Ingreso: 2.100.000 COP\nInternet: muchos pesos",
+    "expected_guardrail": "Rechaza el monto no numérico y solicita una cifra válida.",
+    "why_it_matters": "Un importe no verificable no debe entrar a los cálculos."
+  }
+]

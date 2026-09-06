@@ -232,6 +232,23 @@ El prototipo contempla casos para verificar:
 - Gastos superiores al ingreso.
 - Cumplimiento estricto de los campos del contrato.
 
+## Confiabilidad financiera
+
+**Current score:** 5/5 en los casos versionados de `evals/eval_cases.json`.
+El detalle de la ejecución está en `evals/results.md`. Como evidencia adicional,
+`evals/miguel_edge_cases.json` propone seis escenarios de extracción incómodos
+que se deben confirmar o rechazar antes de calcular un presupuesto final.
+
+**Known failures:** el prototipo aún no diferencia automáticamente devoluciones,
+transferencias, retiros de efectivo o dos movimientos idénticos que sí sean
+compras reales. En esos casos no debe asumir una categoría ni sumar sin la
+confirmación de la persona.
+
+**Next hypothesis:** una pantalla de confirmación de movimientos ambiguos antes
+del cálculo reducirá los totales incorrectos sin obligar al usuario a corregir
+los casos claros. La arquitectura y esa frontera están documentadas en
+`docs/arquitectura.md`.
+
 ## Limitaciones
 
 - El prototipo depende de la disponibilidad y la cuota de Gemini.

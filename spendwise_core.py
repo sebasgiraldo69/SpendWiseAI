@@ -1,5 +1,6 @@
 """Deterministic financial calculations and validation for SpendWise AI."""
 
+from collections import defaultdict
 from math import isclose
 from numbers import Real
 
@@ -30,6 +31,46 @@ REQUIRED_FIELDS = {
 
 def _is_number(value):
     return isinstance(value, Real) and not isinstance(value, bool)
+
+
+def review_extracted_movements(movements):
+    """Flag unsafe extraction details before any financial calculation.
+
+    The LLM may extract candidate movements, but it must not silently decide
+    whether repeated or incomplete entries are legitimate charges.  Callers
+    should ask the user to resolve ``needs_confirmation`` before calculating a
+    final budget.
+    """
+    if not isinstance(movements, list):
+        return {"valid": False, "needs_confirmation": True, "errors": ["movimientos debe ser una lista"]}
+
+    errors = []
+    repeated = defaultdict(list)
+    for index, movement in enumerate(movements):
+        if not isinstance(movement, dict):
+            errors.append(f"Movimiento {index + 1} debe ser un objeto")
+            continue
+        description = movement.get("descripcion")
+        value = movement.get("valor")
+        category = movement.get("categoria", "otros")
+        if not isinstance(description, str) or not description.strip():
+            errors.append(f"Movimiento {index + 1} no tiene descripcion")
+        if not _is_number(value) or value < 0:
+            errors.append(f"Movimiento {index + 1} tiene un valor invalido")
+        if category not in CATEGORIES:
+            errors.append(f"Movimiento {index + 1} tiene una categoria no reconocida")
+        if isinstance(description, str) and _is_number(value):
+            key = (" ".join(description.lower().split()), value)
+            repeated[key].append(index + 1)
+
+    duplicates = [positions for positions in repeated.values() if len(positions) > 1]
+    if duplicates:
+        errors.extend(f"Posible gasto duplicado en movimientos {positions}" for positions in duplicates)
+    return {
+        "valid": not errors,
+        "needs_confirmation": bool(duplicates),
+        "errors": errors,
+    }
 
 
 def calculate_financials(income, movements):
