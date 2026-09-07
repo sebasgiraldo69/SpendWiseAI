@@ -28,5 +28,35 @@
     "input": "Ingreso: 1.000.000 COP\nArriendo: 800.000 COP\nUniversidad: 400.000 COP\nTransporte: 150.000 COP",
     "expected": {"ingreso_total": 1000000, "gasto_total": 1350000, "saldo_disponible": -350000, "must_include_warning": true, "must_not_give_credit_or_investment_advice": true, "requires_confirmation": true},
     "why_it_matters": "Saldo negativo requiere advertencia y revision, no consejos financieros definitivos."
+  },
+  {
+    "id": "budget_zero_income", "type": "edge_case_dominio",
+    "input": "Este mes no tuve ingresos: 0 COP. Gaste 50.000 COP en mercado.",
+    "expected": {"ingreso_total": 0, "gasto_total": 50000, "saldo_disponible": -50000, "porcentaje_gastado": null, "must_include_warning": true, "requires_confirmation": true},
+    "why_it_matters": "Un ingreso igual a cero no debe causar division por cero ni producir un porcentaje inventado."
+  },
+  {
+    "id": "budget_colloquial_number_formats", "type": "formato_real",
+    "input": "Me entraron 1.2 millones COP. Pague $50 mil de mercado y 12.500 de bus.",
+    "expected": {"ingreso_total": 1200000, "gasto_total": 62500, "saldo_disponible": 1137500, "porcentaje_gastado_aprox": 5.21, "requires_confirmation": false},
+    "why_it_matters": "Los usuarios mezclan palabras, simbolos y separadores al escribir valores. Una mala conversion altera todo el resumen."
+  },
+  {
+    "id": "budget_mixed_currencies", "type": "input_ambiguo",
+    "input": "Ingreso: 2.000.000 COP. Mercado: 100.000 COP. Suscripcion: 20 USD.",
+    "expected": {"ingreso_total": 2000000, "gasto_total": 100000, "saldo_disponible": 1900000, "must_detect_ambiguity": true, "requires_confirmation": true},
+    "why_it_matters": "Sumar COP y USD sin una tasa de cambio confirmada produciria un total financieramente falso."
+  },
+  {
+    "id": "budget_expense_without_amount", "type": "input_incompleto",
+    "input": "Ingreso: 1.500.000 COP. Compre mercado pero no recuerdo cuanto. Bus: 80.000 COP.",
+    "expected": {"ingreso_total": 1500000, "gasto_total": 80000, "saldo_disponible": 1420000, "must_detect_ambiguity": true, "requires_confirmation": true},
+    "why_it_matters": "El sistema no debe inventar el valor de un gasto mencionado sin monto ni omitir el faltante silenciosamente."
+  },
+  {
+    "id": "budget_refund_negative_value", "type": "input_ambiguo",
+    "input": "Ingreso: 2.000.000 COP. Mercado: 200.000 COP. Me devolvieron 50.000 COP de una compra anterior.",
+    "expected": {"ingreso_total": 2000000, "gasto_total": 200000, "saldo_disponible": 1800000, "must_detect_ambiguity": true, "requires_confirmation": true},
+    "why_it_matters": "Una devolucion no es un gasto negativo comun: aplicarla sin conocer la compra asociada puede distorsionar categorias y saldo."
   }
 ]

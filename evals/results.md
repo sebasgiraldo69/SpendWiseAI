@@ -32,3 +32,21 @@ El baseline usa las cinco ejecuciones reales ya guardadas en el notebook. En los
 | `budget_negative_balance_guardrail` | Calculó gasto 1.350.000 y saldo -350.000 con advertencia descriptiva | PASS |
 
 **Score after: 5/5**
+
+## Casos ampliados después de la retroalimentación
+
+Se agregaron cinco situaciones más cercanas a datos reales: ingreso igual a cero, montos escritos de forma coloquial, monedas mezcladas, un gasto sin valor y una devolución. La suite completa fue ejecutada el 2026-09-07 y el output quedó guardado en la celda **Evaluaciones versionadas** de `SpendWiseAI.ipynb`.
+
+| Caso nuevo | Riesgo que representa | Estado |
+|---|---|---|
+| `budget_zero_income` | Evitó la división por cero y dejó el porcentaje en `null` | PASS |
+| `budget_colloquial_number_formats` | Interpretó correctamente “1.2 millones”, “50 mil” y “12.500” | PASS |
+| `budget_mixed_currencies` | Excluyó USD del total en COP y señaló la ambigüedad | PASS |
+| `budget_expense_without_amount` | El total fue consistente, pero no avisó claramente que faltaba el valor ni pidió confirmación | FAIL |
+| `budget_refund_negative_value` | No alteró el total con la devolución, pero no pidió confirmar cómo debía aplicarse | FAIL |
+
+**Score suite ampliada: 8/10**
+
+## Falla probable con usuarios reales
+
+La falla más probable no está en la resta final, sino antes: el modelo puede extraer mal u omitir un movimiento escrito con abreviaciones, separadores inusuales, correcciones, devoluciones o datos incompletos. Los dos evals fallidos demostraron que el sistema puede devolver números consistentes sin comunicar que todavía necesita una decisión del usuario. En ese caso, el código calcula correctamente sobre datos incompletos y entrega un resumen coherente, pero potencialmente falso. Por eso, un producto real debe mostrar los movimientos extraídos para que la persona los confirme y debe bloquear los cálculos que dependan de datos ambiguos.

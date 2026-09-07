@@ -1,5 +1,7 @@
 # SpendWise AI
 
+> La separación entre IA, cálculos deterministas, validación y decisión humana está documentada en [docs/arquitectura.md](docs/arquitectura.md).
+
 Proyecto académico desarrollado para la materia **Makers AI Product**.
 
 SpendWise AI es un asistente que ayuda a estudiantes universitarios y jóvenes profesionales a entender en qué gastan su dinero. Recibe un ingreso mensual y una lista de gastos, organiza los movimientos, calcula el estado general del presupuesto y propone oportunidades de ahorro basadas únicamente en la información suministrada.
