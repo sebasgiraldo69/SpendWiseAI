@@ -18,7 +18,7 @@ En el baseline falló el caso del gasto duplicado ambiguo, por lo que el resulta
 
 Sin embargo, todavía faltan pruebas para situaciones reales como valores negativos o devoluciones, ingreso igual a cero, diferentes monedas, formatos de números poco comunes, respuestas incompletas de Gemini y fallos de conexión o cuota de la API. También sería importante repetir varias veces los casos que dependen de IA, porque una sola ejecución no demuestra que el comportamiento sea estable.
 
-Después de recibir la retroalimentación, agregamos casos para ingreso cero, valores escritos como “50 mil” o “1.2 millones”, monedas mezcladas, gastos sin monto y devoluciones. La suite ampliada obtuvo 8/10. Fallaron el gasto sin valor y la devolución: los números quedaron consistentes, pero el sistema no comunicó claramente la incertidumbre ni solicitó confirmación. Esto hace visible que los cálculos pueden estar perfectamente programados y aun así producir un resumen falso o incompleto si Gemini interpreta mal los movimientos originales.
+Después de recibir la retroalimentación, agregamos casos para ingreso cero, valores escritos como “50 mil” o “1.2 millones”, monedas mezcladas, gastos sin monto, devoluciones y categorías ambiguas. La suite ampliada obtuvo 8/11. Fallaron el gasto sin valor, la devolución y la categoría ambigua: los números quedaron consistentes, pero el sistema no comunicó claramente la incertidumbre ni solicitó confirmación. Esto hace visible que los cálculos pueden estar perfectamente programados y aun así producir un resumen falso o incompleto si Gemini interpreta mal los movimientos originales.
 
 ## ¿Qué haríamos primero si esto fuera un producto real?
 

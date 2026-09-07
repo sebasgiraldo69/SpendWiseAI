@@ -45,8 +45,16 @@ Se agregaron cinco situaciones más cercanas a datos reales: ingreso igual a cer
 | `budget_expense_without_amount` | El total fue consistente, pero no avisó claramente que faltaba el valor ni pidió confirmación | FAIL |
 | `budget_refund_negative_value` | No alteró el total con la devolución, pero no pidió confirmar cómo debía aplicarse | FAIL |
 
-**Score suite ampliada: 8/10**
+**Score de la primera suite ampliada: 8/10**
+
+Después de esa ejecución se agregó `budget_ambiguous_category` para cubrir explícitamente categorías que no pueden inferirse a partir del comercio o la descripción. La suite de once casos se ejecutó el 2026-09-07 y obtuvo **8/11**. El nuevo caso conservó correctamente el valor de 120.000 COP, pero falló porque no comunicó la ambigüedad de la categoría ni pidió confirmación.
+
+| Caso adicional | Resultado observado | Estado |
+|---|---|---|
+| `budget_ambiguous_category` | Conservó el gasto, pero aceptó una categoría sin solicitar confirmación | FAIL |
+
+**Score suite actual: 8/11**
 
 ## Falla probable con usuarios reales
 
-La falla más probable no está en la resta final, sino antes: el modelo puede extraer mal u omitir un movimiento escrito con abreviaciones, separadores inusuales, correcciones, devoluciones o datos incompletos. Los dos evals fallidos demostraron que el sistema puede devolver números consistentes sin comunicar que todavía necesita una decisión del usuario. En ese caso, el código calcula correctamente sobre datos incompletos y entrega un resumen coherente, pero potencialmente falso. Por eso, un producto real debe mostrar los movimientos extraídos para que la persona los confirme y debe bloquear los cálculos que dependan de datos ambiguos.
+La falla más probable no está en la resta final, sino antes: el modelo puede extraer mal u omitir un movimiento escrito con abreviaciones, separadores inusuales, correcciones, devoluciones, categorías dudosas o datos incompletos. Los tres evals fallidos demostraron que el sistema puede devolver números consistentes sin comunicar que todavía necesita una decisión del usuario. En ese caso, el código calcula correctamente sobre datos incompletos y entrega un resumen coherente, pero potencialmente falso. Por eso, un producto real debe mostrar los movimientos extraídos para que la persona los confirme y debe bloquear los cálculos que dependan de datos ambiguos.

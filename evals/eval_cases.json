@@ -58,5 +58,11 @@
     "input": "Ingreso: 2.000.000 COP. Mercado: 200.000 COP. Me devolvieron 50.000 COP de una compra anterior.",
     "expected": {"ingreso_total": 2000000, "gasto_total": 200000, "saldo_disponible": 1800000, "must_detect_ambiguity": true, "requires_confirmation": true},
     "why_it_matters": "Una devolucion no es un gasto negativo comun: aplicarla sin conocer la compra asociada puede distorsionar categorias y saldo."
+  },
+  {
+    "id": "budget_ambiguous_category", "type": "categoria_ambigua",
+    "input": "Ingreso: 2.000.000 COP. Pague 120.000 COP en Establecimiento XYZ, pero no recuerdo que compre.",
+    "expected": {"ingreso_total": 2000000, "gasto_total": 120000, "saldo_disponible": 1880000, "must_detect_ambiguity": true, "requires_confirmation": true},
+    "why_it_matters": "El valor del movimiento es valido, pero asignar una categoria especifica sin conocer la compra produciria un analisis engañoso."
   }
 ]

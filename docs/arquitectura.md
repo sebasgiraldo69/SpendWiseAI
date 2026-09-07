@@ -45,6 +45,7 @@ Los movimientos dudosos se excluyen hasta que la persona los confirme. Esto incl
 - un gasto mencionado sin monto;
 - una moneda diferente sin tasa de cambio confirmada;
 - una devolución sin información suficiente sobre la compra asociada.
+- un movimiento con valor conocido, pero sin información suficiente para asignar una categoría.
 
 El sistema puede calcular un resumen parcial con los movimientos válidos, pero debe explicar qué dato quedó pendiente.
 
@@ -65,4 +66,4 @@ Por eso, una versión de producto debe mostrar los movimientos extraídos antes 
 
 ## Evidencia actual
 
-La suite original mejoró de **4/5** a **5/5**. Después de la retroalimentación se agregaron cinco casos difíciles, para un total de diez. La ejecución ampliada obtuvo **8/10**: fallaron el gasto sin monto y la devolución porque el resultado fue matemáticamente consistente, pero no solicitó confirmación. Esto demuestra que validar las operaciones no basta; también es necesario validar que la incertidumbre se comunique al usuario.
+La suite original mejoró de **4/5** a **5/5**. Después de la retroalimentación se agregaron casos más difíciles y la suite actual llegó a once. La ejecución obtuvo **8/11**: fallaron el gasto sin monto, la devolución y la categoría ambigua porque los resultados fueron matemáticamente consistentes, pero no solicitaron confirmación. Esto demuestra que validar las operaciones no basta; también es necesario validar que la incertidumbre se comunique al usuario.
