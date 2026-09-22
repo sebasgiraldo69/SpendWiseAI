@@ -1,9 +1,25 @@
+# Estado actual · 2026-09-22
+
+La evidencia histórica de abajo se conserva; no es un resultado de la nueva implementación.
+
+- **Software actual: 11/11 offline** en `evals/offline_report.json`, usando extracciones anotadas manualmente.
+- **Regresión técnica:** ver `evals/gates_report.json`, generado por `python verify.py`.
+- **Navegador:** ver `evals/browser_report.json` si se ejecutó la prueba opcional.
+- **Gemini actual: pendiente.** No hay credencial configurada en este entorno. Ejecutar `python -m evals.run_evals --live --ask-key --repeat 3 --output evals/runs/live.json` para medirlo.
+- **Usuarios y gates oficiales: pendientes.** No hay evidencia externa ni rúbrica disponible.
+
+La nueva versión hace explícitos los datos dudosos, exige revisión humana y deriva el ahorro de un escenario elegido por el usuario. El evaluador verifica inventario, ingreso, gasto, incidencias y controles; ya no ignora las banderas de invención e inyección. Citas y heurísticas no garantizan interpretación semántica correcta. Los nuevos scores reales deberán reportarse con modelo, fecha, repeticiones y hashes.
+
+No comparar 11/11 offline con 8/11 histórico como si fuera una mejora medida del modelo.
+
+---
+
 # SpendWise AI — resultados de evaluación
 
 ## Baseline
 
 - Fecha de registro: 2026-08-27
-- Evidencia: outputs de las ejecuciones 17 y 19 guardados en `SpendWiseAI.ipynb`
+- Evidencia: outputs de las ejecuciones 17 y 19 guardados en `docs/SpendWiseAI_historico.ipynb`
 - Modelo configurado actualmente: `gemini-3.5-flash-lite`
 
 | Caso | Resultado real observado | Estado |
@@ -21,7 +37,7 @@ El baseline usa las cinco ejecuciones reales ya guardadas en el notebook. En los
 ## After
 
 - Fecha de ejecución: 2026-08-27
-- Evidencia: output guardado de la celda **Evaluaciones versionadas** en `SpendWiseAI.ipynb`
+- Evidencia: output guardado de la celda **Evaluaciones versionadas** en `docs/SpendWiseAI_historico.ipynb`
 
 | Caso | Resultado observado | Estado |
 |---|---|---|
@@ -35,7 +51,7 @@ El baseline usa las cinco ejecuciones reales ya guardadas en el notebook. En los
 
 ## Casos ampliados después de la retroalimentación
 
-Se agregaron cinco situaciones más cercanas a datos reales: ingreso igual a cero, montos escritos de forma coloquial, monedas mezcladas, un gasto sin valor y una devolución. La suite completa fue ejecutada el 2026-09-07 y el output quedó guardado en la celda **Evaluaciones versionadas** de `SpendWiseAI.ipynb`.
+Se agregaron cinco situaciones más cercanas a datos reales: ingreso igual a cero, montos escritos de forma coloquial, monedas mezcladas, un gasto sin valor y una devolución. La suite completa fue ejecutada el 2026-09-07 y el output quedó guardado en la celda **Evaluaciones versionadas** de `docs/SpendWiseAI_historico.ipynb`.
 
 | Caso nuevo | Riesgo que representa | Estado |
 |---|---|---|

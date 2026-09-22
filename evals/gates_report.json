@@ -1,0 +1,61 @@
+{
+  "timestamp_utc": "2026-09-22T16:57:35.226320+00:00",
+  "scope": "Gates propuestos por el equipo. No equivalen a aprobacion oficial.",
+  "technical_pass": true,
+  "all_gates_pass": false,
+  "unit_test_output": "test_decimal_rounding (test_spendwise.FinancialTests.test_decimal_rounding) ... ok\ntest_happy_path_exact (test_spendwise.FinancialTests.test_happy_path_exact) ... ok\ntest_injection_controls_need_evidence (test_spendwise.FinancialTests.test_injection_controls_need_evidence) ... ok\ntest_invalid_numbers (test_spendwise.FinancialTests.test_invalid_numbers) ... ok\ntest_negative_income (test_spendwise.FinancialTests.test_negative_income) ... ok\ntest_null_and_zero_income (test_spendwise.FinancialTests.test_null_and_zero_income) ... ok\ntest_source_checked_savings (test_spendwise.FinancialTests.test_source_checked_savings) ... ok\ntest_unknown_expectation_fails (test_spendwise.FinancialTests.test_unknown_expectation_fails) ... ok\ntest_unknown_savings_id (test_spendwise.FinancialTests.test_unknown_savings_id) ... ok\ntest_wrong_sum_and_savings_blocked (test_spendwise.FinancialTests.test_wrong_sum_and_savings_blocked) ... ok\ntest_arbitrary_files_not_served (test_spendwise.HTTPTests.test_arbitrary_files_not_served) ... ok\ntest_cross_origin_blocked (test_spendwise.HTTPTests.test_cross_origin_blocked) ... ok\ntest_fixture_does_not_accept_arbitrary_input (test_spendwise.HTTPTests.test_fixture_does_not_accept_arbitrary_input) ... ok\ntest_http_full_flow_and_forget (test_spendwise.HTTPTests.test_http_full_flow_and_forget) ... ok\ntest_http_rejects_unconfirmed (test_spendwise.HTTPTests.test_http_rejects_unconfirmed) ... ok\ntest_session_expiry (test_spendwise.HTTPTests.test_session_expiry) ... ok\ntest_static_assets (test_spendwise.HTTPTests.test_static_assets) ... ok\ntest_invalid_json (test_spendwise.ProviderTests.test_invalid_json) ... ok\ntest_missing_key (test_spendwise.ProviderTests.test_missing_key) ... ok\ntest_quota_safe_message (test_spendwise.ProviderTests.test_quota_safe_message) ... ok\ntest_structured_response (test_spendwise.ProviderTests.test_structured_response) ... ok\ntest_timeout_safe_message (test_spendwise.ProviderTests.test_timeout_safe_message) ... ok\ntest_all_offline_evals (test_spendwise.ReviewTests.test_all_offline_evals) ... ok\ntest_category_correction (test_spendwise.ReviewTests.test_category_correction) ... ok\ntest_duplicate_exclusion (test_spendwise.ReviewTests.test_duplicate_exclusion) ... ok\ntest_foreign_currency_and_refund_cannot_be_summed (test_spendwise.ReviewTests.test_foreign_currency_and_refund_cannot_be_summed) ... ok\ntest_human_confirmation_enforced (test_spendwise.ReviewTests.test_human_confirmation_enforced) ... ok\ntest_malformed_extraction (test_spendwise.ReviewTests.test_malformed_extraction) ... ok\ntest_missing_amount_correction (test_spendwise.ReviewTests.test_missing_amount_correction) ... ok\ntest_no_empty_budget (test_spendwise.ReviewTests.test_no_empty_budget) ... ok\ntest_no_silent_dropped_rows (test_spendwise.ReviewTests.test_no_silent_dropped_rows) ... ok\ntest_omitted_uncertainty_still_flagged (test_spendwise.ReviewTests.test_omitted_uncertainty_still_flagged) ... ok\ntest_preview_does_not_claim_confirmation (test_spendwise.ReviewTests.test_preview_does_not_claim_confirmation) ... ok\ntest_quote_provenance (test_spendwise.ReviewTests.test_quote_provenance) ... ok\ntest_three_historical_failures_surface (test_spendwise.ReviewTests.test_three_historical_failures_surface) ... ok\n\n----------------------------------------------------------------------\nRan 35 tests in 0.744s\n\nOK\n",
+  "offline_score": "11/11",
+  "gates": [
+    {
+      "id": "T1",
+      "name": "Contrato y calculos",
+      "status": "PASS"
+    },
+    {
+      "id": "T2",
+      "name": "Incertidumbre y revision humana",
+      "status": "PASS"
+    },
+    {
+      "id": "T3",
+      "name": "Errores de proveedor y controles HTTP",
+      "status": "PASS"
+    },
+    {
+      "id": "T4",
+      "name": "Regresion con fixtures",
+      "status": "PASS"
+    },
+    {
+      "id": "E1",
+      "name": "Calidad actual de Gemini: 33/33 y cero fallos criticos",
+      "status": "PENDING"
+    },
+    {
+      "id": "E2",
+      "name": "Validacion con usuarios reales",
+      "status": "PENDING"
+    },
+    {
+      "id": "E3",
+      "name": "Correspondencia con rubrica oficial",
+      "status": "PENDING"
+    }
+  ],
+  "source_sha256": {
+    "spendwise_core.py": "dae8d7077276b4f76103edd396dfe885bf544edddf76aba8ad555c8b695f8823",
+    "spendwise_service.py": "3a1b93b8e1a2877ec81aa07b1701a565d3f4b487e6bf96f809bf8ece979f2f3f",
+    "evals/run_evals.py": "4dea3288bb5b6efa995dc2a45b4dd484016cf7edc0677e200038e0fd21bbff28",
+    "evals/eval_cases.json": "873d134ddb5ee66fd9d0cd0379d2247ad981603bfb918e1e59bfad5ff9e1e01b",
+    "evals/extraction_fixtures.json": "9063977bc82ad20d0042345c85650054d21689f47c75b0f3cdb33357c148900c",
+    "app.py": "74fe59aff6a32847ef6d74f3f5dd00d057ee84be6ce7b6af5e19479a592864a8",
+    "verify.py": "964f5953595bcba7f33909283a37de171d9008413d02ab6aaabab9187c7e3b80",
+    "tests\\test_spendwise.py": "65a7686d9047c75c54795facca0ff61596c92fe3564355a00864433fa8bcd3a3",
+    "web\\app.js": "cc80fddbc48a54d4eaaad5793019009ec291b707ea3f1451ab600311e496d1db",
+    "web\\index.html": "6c39d04a33cab4cad08119e039d767a4b9a68ae53a34beb1dceaa4cc5ec7b6a5",
+    "web\\pitch.css": "1707964c8a52b32673a61a451256569ac4a1765838b7fb9195267f656c999b06",
+    "web\\pitch.html": "fab4ec8547ebd517f880292a2dfcff1fddb4857fc053e345c002a4b7cfab2fa1",
+    "web\\pitch.js": "f8ac6bda2a6b4c345d8fe806113e47364d6e76220e50a34e06ff06267c70cf66",
+    "web\\styles.css": "d14d503e71e45cab17001e34e371efadb89911e7432aa379a4c912f6c9b1e2eb"
+  }
+}

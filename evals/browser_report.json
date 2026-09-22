@@ -1,0 +1,26 @@
+{
+  "timestamp_utc": "2026-09-22T16:46:34.682390+00:00",
+  "source_sha256": {
+    "app.py": "74fe59aff6a32847ef6d74f3f5dd00d057ee84be6ce7b6af5e19479a592864a8",
+    "spendwise_service.py": "3a1b93b8e1a2877ec81aa07b1701a565d3f4b487e6bf96f809bf8ece979f2f3f",
+    "tests\\browser_smoke.py": "ca62e3c96cc1eeba38b4921509cb09ad947a4af76dc8835a3f850187f30b5b03",
+    "web\\app.js": "cc80fddbc48a54d4eaaad5793019009ec291b707ea3f1451ab600311e496d1db",
+    "web\\index.html": "6c39d04a33cab4cad08119e039d767a4b9a68ae53a34beb1dceaa4cc5ec7b6a5",
+    "web\\pitch.css": "1707964c8a52b32673a61a451256569ac4a1765838b7fb9195267f656c999b06",
+    "web\\pitch.html": "fab4ec8547ebd517f880292a2dfcff1fddb4857fc053e345c002a4b7cfab2fa1",
+    "web\\pitch.js": "f8ac6bda2a6b4c345d8fe806113e47364d6e76220e50a34e06ff06267c70cf66",
+    "web\\styles.css": "d14d503e71e45cab17001e34e371efadb89911e7432aa379a4c912f6c9b1e2eb"
+  },
+  "mode": "fixture",
+  "browser": "Microsoft Edge / Playwright",
+  "checks": [
+    "Normal flow, user-selected savings, simulated label, JSON export",
+    "Missing amount visible, corrected, included, recalculated",
+    "All 11 examples traverse review and result",
+    "Real provider requires explicit consent",
+    "Mobile 390px entry, table scrolling, result without page overflow",
+    "Pitch navigation, timer and PDF export"
+  ],
+  "console_errors": [],
+  "status": "PASS"
+}

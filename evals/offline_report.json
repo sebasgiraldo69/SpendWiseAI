@@ -1,0 +1,756 @@
+{
+  "timestamp_utc": "2026-09-22T16:57:35.224843+00:00",
+  "mode": "fixture",
+  "meaning": "Software checks with hand-annotated extraction; does NOT measure Gemini quality",
+  "model": null,
+  "prompt_version": "spendwise-extraction-v3",
+  "repeat": 1,
+  "source_sha256": {
+    "spendwise_core.py": "dae8d7077276b4f76103edd396dfe885bf544edddf76aba8ad555c8b695f8823",
+    "spendwise_service.py": "3a1b93b8e1a2877ec81aa07b1701a565d3f4b487e6bf96f809bf8ece979f2f3f",
+    "evals/run_evals.py": "4dea3288bb5b6efa995dc2a45b4dd484016cf7edc0677e200038e0fd21bbff28",
+    "evals/eval_cases.json": "873d134ddb5ee66fd9d0cd0379d2247ad981603bfb918e1e59bfad5ff9e1e01b",
+    "evals/extraction_fixtures.json": "9063977bc82ad20d0042345c85650054d21689f47c75b0f3cdb33357c148900c"
+  },
+  "passed": 11,
+  "total": 11,
+  "results": [
+    {
+      "case": "budget_happy_path_totals",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [],
+        "requires_confirmation": false,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2800000,
+        "fuente_ingreso": "Ingreso mensual: 2.800.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Arriendo",
+            "valor": 900000,
+            "categoria": "vivienda",
+            "fuente": "Arriendo: 900.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Mercado",
+            "valor": 350000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 350.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Restaurantes",
+            "valor": 300000,
+            "categoria": "alimentacion",
+            "fuente": "Restaurantes: 300.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Uber",
+            "valor": 280000,
+            "categoria": "transporte",
+            "fuente": "Uber: 280.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Netflix",
+            "valor": 26900,
+            "categoria": "entretenimiento",
+            "fuente": "Netflix: 26.900",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Spotify",
+            "valor": 19900,
+            "categoria": "entretenimiento",
+            "fuente": "Spotify: 19.900",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Salidas con amigos",
+            "valor": 350000,
+            "categoria": "entretenimiento",
+            "fuente": "Salidas con amigos: 350.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Universidad",
+            "valor": 400000,
+            "categoria": "educacion",
+            "fuente": "Universidad: 400.000",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2800000,
+        "gasto_total": 2626800.0,
+        "saldo_disponible": 173200.0,
+        "porcentaje_gastado": 93.81,
+        "categorias": {
+          "vivienda": 900000.0,
+          "alimentacion": 650000.0,
+          "transporte": 280000.0,
+          "educacion": 400000.0,
+          "entretenimiento": 396800.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "vivienda",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional: falta revisar y confirmar los movimientos."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 1
+    },
+    {
+      "case": "budget_missing_income",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "missing_income"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": null,
+        "fuente_ingreso": null,
+        "movimientos": [
+          {
+            "descripcion": "Arriendo",
+            "valor": 900000,
+            "categoria": "vivienda",
+            "fuente": "Arriendo: 900.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Mercado",
+            "valor": 350000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 350.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Transporte",
+            "valor": 120000,
+            "categoria": "transporte",
+            "fuente": "Transporte: 120.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": null,
+        "gasto_total": 1370000.0,
+        "saldo_disponible": null,
+        "porcentaje_gastado": null,
+        "categorias": {
+          "vivienda": 900000.0,
+          "alimentacion": 350000.0,
+          "transporte": 120000.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "vivienda",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Falta el ingreso. Completa el dato o acepta un resumen parcial."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_duplicate_ambiguous_rent",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "duplicate",
+          "duplicate"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2000000,
+        "fuente_ingreso": "Ingreso mensual: 2.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Arriendo",
+            "valor": 800000,
+            "categoria": "vivienda",
+            "fuente": "Arriendo: 800.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Arriendo",
+            "valor": 900000,
+            "categoria": "vivienda",
+            "fuente": "Arriendo: 900.000 COP para el mismo mes",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Mercado",
+            "valor": 250000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 250.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2000000,
+        "gasto_total": 250000.0,
+        "saldo_disponible": 1750000.0,
+        "porcentaje_gastado": 12.5,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 250000.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Posible duplicado. Confirma que son gastos distintos o excluye el incorrecto. Posible duplicado. Confirma que son gastos distintos o excluye el incorrecto."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_prompt_injection",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [],
+        "requires_confirmation": false,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2000000,
+        "fuente_ingreso": "Ingreso: 2.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": 300000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 300.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2000000,
+        "gasto_total": 300000.0,
+        "saldo_disponible": 1700000.0,
+        "porcentaje_gastado": 15.0,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 300000.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional: falta revisar y confirmar los movimientos."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_negative_balance_guardrail",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "negative_balance"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 1000000,
+        "fuente_ingreso": "Ingreso: 1.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Arriendo",
+            "valor": 800000,
+            "categoria": "vivienda",
+            "fuente": "Arriendo: 800.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Universidad",
+            "valor": 400000,
+            "categoria": "educacion",
+            "fuente": "Universidad: 400.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Transporte",
+            "valor": 150000,
+            "categoria": "transporte",
+            "fuente": "Transporte: 150.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 1000000,
+        "gasto_total": 1350000.0,
+        "saldo_disponible": -350000.0,
+        "porcentaje_gastado": 135.0,
+        "categorias": {
+          "vivienda": 800000.0,
+          "alimentacion": 0.0,
+          "transporte": 150000.0,
+          "educacion": 400000.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "vivienda",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Los gastos superan el ingreso. Revisa los datos antes de continuar."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_zero_income",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "negative_balance"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 0,
+        "fuente_ingreso": "Este mes no tuve ingresos: 0 COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": 50000,
+            "categoria": "alimentacion",
+            "fuente": "Gaste 50.000 COP en mercado",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 0,
+        "gasto_total": 50000.0,
+        "saldo_disponible": -50000.0,
+        "porcentaje_gastado": null,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 50000.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Los gastos superan el ingreso. Revisa los datos antes de continuar."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_colloquial_number_formats",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [],
+        "requires_confirmation": false,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 1200000,
+        "fuente_ingreso": "Me entraron 1.2 millones COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": 50000,
+            "categoria": "alimentacion",
+            "fuente": "$50 mil de mercado",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Bus",
+            "valor": 12500,
+            "categoria": "transporte",
+            "fuente": "12.500 de bus",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 1200000,
+        "gasto_total": 62500.0,
+        "saldo_disponible": 1137500.0,
+        "porcentaje_gastado": 5.21,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 50000.0,
+          "transporte": 12500.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional: falta revisar y confirmar los movimientos."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_mixed_currencies",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "mixed_currency"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2000000,
+        "fuente_ingreso": "Ingreso: 2.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": 100000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 100.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Suscripcion",
+            "valor": 20,
+            "categoria": "entretenimiento",
+            "fuente": "Suscripcion: 20 USD",
+            "moneda": "USD",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2000000,
+        "gasto_total": 100000.0,
+        "saldo_disponible": 1900000.0,
+        "porcentaje_gastado": 5.0,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 100000.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Moneda distinta de COP. Se excluye; registra un importe COP confirmado por separado."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_expense_without_amount",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "missing_amount"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 1500000,
+        "fuente_ingreso": "Ingreso: 1.500.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": null,
+            "categoria": "alimentacion",
+            "fuente": "Compre mercado pero no recuerdo cuanto",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Bus",
+            "valor": 80000,
+            "categoria": "transporte",
+            "fuente": "Bus: 80.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 1500000,
+        "gasto_total": 80000.0,
+        "saldo_disponible": 1420000.0,
+        "porcentaje_gastado": 5.33,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 0.0,
+          "transporte": 80000.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "transporte",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Falta el monto. Completa el valor o excluye el gasto."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_refund_negative_value",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "refund",
+          "unknown_category"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2000000,
+        "fuente_ingreso": "Ingreso: 2.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Mercado",
+            "valor": 200000,
+            "categoria": "alimentacion",
+            "fuente": "Mercado: 200.000 COP",
+            "moneda": "COP",
+            "tipo": "expense"
+          },
+          {
+            "descripcion": "Devolucion",
+            "valor": 50000,
+            "categoria": null,
+            "fuente": "Me devolvieron 50.000 COP de una compra anterior",
+            "moneda": "COP",
+            "tipo": "refund"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2000000,
+        "gasto_total": 200000.0,
+        "saldo_disponible": 1800000.0,
+        "porcentaje_gastado": 10.0,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 200000.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 0.0
+        },
+        "categoria_mayor_gasto": "alimentacion",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. La devolucion necesita conciliacion. Se excluye de este presupuesto. Confirma la categoria de esta compra; provisionalmente aparece en otros."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    },
+    {
+      "case": "budget_ambiguous_category",
+      "iteration": 1,
+      "status": "PASS",
+      "errors": [],
+      "trace": {
+        "movements_match_reference": true,
+        "issues": [
+          "unknown_category"
+        ],
+        "requires_confirmation": true,
+        "recommendation_policy": "user_scenario_only"
+      },
+      "raw_extraction": {
+        "ingreso_total": 2000000,
+        "fuente_ingreso": "Ingreso: 2.000.000 COP",
+        "movimientos": [
+          {
+            "descripcion": "Establecimiento XYZ",
+            "valor": 120000,
+            "categoria": null,
+            "fuente": "Pague 120.000 COP en Establecimiento XYZ, pero no recuerdo que compre",
+            "moneda": "COP",
+            "tipo": "expense"
+          }
+        ],
+        "incidencias": []
+      },
+      "output": {
+        "ingreso_total": 2000000,
+        "gasto_total": 120000.0,
+        "saldo_disponible": 1880000.0,
+        "porcentaje_gastado": 6.0,
+        "categorias": {
+          "vivienda": 0.0,
+          "alimentacion": 0.0,
+          "transporte": 0.0,
+          "educacion": 0.0,
+          "entretenimiento": 0.0,
+          "otros": 120000.0
+        },
+        "categoria_mayor_gasto": "otros",
+        "gastos_reducibles": [],
+        "oportunidades_ahorro": [],
+        "ahorro_potencial": 0.0,
+        "recomendacion_principal": null,
+        "estado_financiero": "Resumen provisional. Confirma la categoria de esta compra; provisionalmente aparece en otros."
+      },
+      "metadata": {
+        "mode": "fixture",
+        "model": null,
+        "prompt_version": "spendwise-extraction-v3"
+      },
+      "latency_ms": 0
+    }
+  ]
+}

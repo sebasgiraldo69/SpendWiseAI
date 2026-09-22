@@ -2,13 +2,15 @@
 
 Objetivo: que todos entiendan todo el sistema, no que cada persona quede encerrada en una parte.
 
-## Semana actual
+## Reparto sugerido para preparar la entrega (por confirmar por el equipo)
 
 | Rol temporal | Responsable | Que lidera | Quien debe poder explicarlo |
 |---|---|---|---|
-| Build owner | TBD | Cambio tecnico en notebook/script, prompt, modelo o flujo principal | TBD |
-| Evaluate owner | TBD | Evals, baseline, expected vs actual, pass/fail | TBD |
-| Explain owner | TBD | README, resultados, decisiones y demo tecnica | TBD |
+| Build owner | Miguel Ángel (propuesto) | Ejecutar y explicar web app, extracción y revisión humana | Sebastián |
+| Evaluate owner | Sebastián (propuesto) | Revisar evals, ejecutar Gemini real y registrar fallos | Miguel Ángel |
+| Explain owner | Ambos (propuesto) | Ensayar pitch de seis minutos e intercambiar explicaciones | Ambos |
+
+Esta distribución es una propuesta de trabajo futuro, no evidencia de aportes ya realizados. La implementación asistida y sus pruebas están en el workspace; cada integrante todavía debe revisar, entender y dejar su contribución real. No se crearon commits ni se publicó en GitHub.
 
 ## Reglas
 

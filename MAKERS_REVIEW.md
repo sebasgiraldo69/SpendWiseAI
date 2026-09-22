@@ -1,5 +1,7 @@
 # Makers Review
 
+> Revisión histórica conservada. La actualización del 2026-09-22 implementa web app, revisión humana y evals estrictos. Consultar `README.md`, `docs/gates.md` y `evals/results.md` para el estado actual; el notebook original está en `docs/SpendWiseAI_historico.ipynb`.
+
 ## Que encontramos
 
 - El proyecto tiene un caso claro: convertir gastos en lenguaje natural en un resumen financiero estructurado.
