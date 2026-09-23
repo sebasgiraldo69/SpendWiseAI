@@ -1,265 +1,113 @@
-# SpendWise AI
+﻿# SpendWise AI
 
-Proyecto académico desarrollado para la materia **Makers AI Product**.
+Aplicación local para analizar ingresos y gastos con Gemini, confirmar la interpretación, guardar presupuestos por perfil, comparar meses y planear metas o eventos.
 
-SpendWise AI es un asistente que ayuda a estudiantes universitarios y jóvenes profesionales a entender en qué gastan su dinero. Recibe un ingreso mensual y una lista de gastos, organiza los movimientos, calcula el estado general del presupuesto y propone oportunidades de ahorro basadas únicamente en la información suministrada.
+## Ejecutar
 
-## Objetivo
+Python 3.10 o superior. Instalar las dependencias del nuevo servidor una vez:
 
-Convertir una lista de gastos escrita en lenguaje natural en un resultado financiero claro y estructurado que posteriormente pueda ser utilizado como JSON.
-
-El sistema no debe inventar gastos, ingresos ni información financiera. Las recomendaciones son orientativas y la decisión final siempre corresponde al usuario.
-
-## Funcionalidades
-
-El prototipo realiza el siguiente flujo:
-
-1. Valida que exista un ingreso mensual y al menos un gasto válido.
-2. Extrae la descripción y el valor de cada movimiento.
-3. Clasifica los gastos en vivienda, alimentación, transporte, educación, entretenimiento u otros.
-4. Calcula el gasto total, el saldo disponible y el porcentaje del ingreso gastado.
-5. Identifica la categoría con mayor gasto.
-6. Detecta gastos que podrían reducirse.
-7. Genera oportunidades de ahorro y una recomendación principal.
-8. Devuelve un resultado estructurado.
-
-## Estructura del output
-
-El resultado contiene exactamente los siguientes campos:
-
-```json
-{
-  "ingreso_total": 0,
-  "gasto_total": 0,
-  "saldo_disponible": 0,
-  "porcentaje_gastado": 0,
-  "categorias": {},
-  "categoria_mayor_gasto": null,
-  "gastos_reducibles": [],
-  "oportunidades_ahorro": [],
-  "ahorro_potencial": 0,
-  "recomendacion_principal": null,
-  "estado_financiero": null
-}
+```powershell
+python -m pip install -r requirements.txt
+python app.py --ask-key
 ```
 
-## Archivo principal
+Pega la clave cuando la terminal la solicite (entrada oculta). Abre **http://127.0.0.1:8000**. Deja la terminal abierta.
 
-El proyecto se encuentra en el notebook:
+Si tenías el servidor anterior abierto, detenlo con Ctrl+C antes de iniciar esta versión. Recarga el navegador con Ctrl+F5. El cambio de arquitectura requiere reiniciar el proceso; actualizar archivos no modifica un servidor que ya está ejecutándose.
 
-```text
-SpendWiseAI.ipynb
+También se admite `GEMINI_API_KEY` como variable de entorno y `python app.py --port 8001`. `GEMINI_MODEL` permite elegir un modelo disponible en la cuenta; por defecto conserva `gemini-3.5-flash-lite`. La disponibilidad de ese modelo depende del proveedor y la cuenta. No se guarda la clave en SQLite ni en el navegador.
+
+## Flujo actual
+
+1. Selecciona un perfil local o crea uno con **+ Perfil**.
+2. Indica el periodo, escribe ingresos/gastos y autoriza el envío a Gemini.
+3. Pulsa **Analizar gastos**. Puedes navegar al historial mientras el trabajo está en curso, cancelarlo o cambiar de perfil.
+4. Revisa/corrige los movimientos y confirma el presupuesto. Los cálculos son deterministas en Python.
+5. Guarda el mes. En **Historial** puedes verlo, editarlo o eliminarlo. Reemplazar un mes existente requiere confirmación.
+6. En **Comparar**, selecciona dos meses del perfil. Las diferencias se calculan localmente; la explicación de Gemini se solicita por separado.
+7. En **Planear**, selecciona un presupuesto y describe una meta o evento. Ajusta reducciones o montos, confirma los supuestos y calcula el escenario.
+
+Ya no hay selector de ensayo ni ejemplos precargados en la aplicación. Los fixtures permanecen exclusivamente en los evals y tests. No se cambia de Gemini a simulación cuando ocurre un error.
+
+## Arquitectura del refactor
+
+- **FastAPI + Uvicorn:** API REST asíncrona; validación y errores HTTP consistentes.
+- **HTTPX:** cliente Gemini reutilizable con conexiones persistentes, timeout de conexión de 5 s y de lectura de 25 s.
+- **Trabajos de IA:** creación HTTP 202, consulta de estado, resultado y cancelación. Máximo dos llamadas simultáneas, ocho trabajos activos globales y dos por sesión. Límite total de 40 s incluyendo espera en cola.
+- **SQLite:** conexión por operación, transacciones, claves foráneas y modo WAL. No se comparte una conexión mutable entre todas las solicitudes.
+- **JavaScript modular:** cliente HTTP único, consultas locales limitadas a 8 s, polling cada 700 ms y descarte de respuestas de perfiles anteriores. Se bloquea el botón de la operación, no toda la interfaz.
+
+El bloqueo previo provenía de adquirir un `threading.Lock` dentro de otro bloque que ya poseía ese mismo candado al cambiar de perfil. Esto también podía detener la limpieza del servidor. Ese mecanismo fue eliminado; las sesiones y trabajos los administra el event loop.
+
+La API no puede garantizar que Gemini genere instantáneamente. Sí evita que su espera bloquee perfiles/historial, limita el tiempo total y permite cancelar. Hay un único reintento breve para HTTP 502/503/504; no se reintentan automáticamente cuotas, credenciales o respuestas inválidas.
+
+Solicitudes de IA idénticas dentro de una misma sesión se deduplican hasta 120 s. Cambiar de perfil invalida trabajos y revisiones; olvidar una revisión elimina su entrada reutilizable. Los resultados de trabajo expiran a los cinco minutos. El historial tiene una caché de interfaz de diez segundos que se invalida al guardar, editar o borrar.
+
+## API
+
+Contrato OpenAPI: **http://127.0.0.1:8000/openapi.json**. Estado local: `/api/health`.
+
+| Método y ruta | Uso |
+|---|---|
+| `GET /api/config` | Configuración y sesión local |
+| `GET/POST /api/profiles` | Listar/crear perfiles |
+| `POST /api/profile/select` | Cambiar perfil y cancelar trabajo anterior |
+| `POST /api/extract` | Crear trabajo de extracción (202) |
+| `GET/DELETE /api/jobs/{id}` | Estado/resultado o cancelación |
+| `POST /api/confirm` | Confirmar datos y calcular |
+| `POST /api/forget` | Descartar revisión |
+| `GET/POST /api/budgets` | Historial/guardar mes |
+| `GET/PUT/DELETE /api/budgets/{id}` | Leer, editar, eliminar |
+| `POST /api/compare` | Comparar con datos almacenados |
+| `POST /api/compare/explanation` | Trabajo de explicación (202) |
+| `POST /api/scenarios/interpret` | Trabajo de meta/evento (202) |
+| `POST /api/scenarios/calculate` | Calcular supuestos confirmados con el presupuesto guardado |
+
+Los endpoints de IA devuelven un objeto con `id`, `status`, `result`, `error`. Estados: `queued`, `running`, `done`, `error`, `cancelled`. El cliente consulta el mismo ID; no repite el POST en cada consulta. Los endpoints locales no llaman a Gemini.
+
+## Datos y compatibilidad
+
+Se mantiene `data/spendwise.db` y el esquema existente. **No se borra el historial ni se reinician los perfiles al actualizar.** `SPENDWISE_DB_PATH` permite usar otra ubicación. El reemplazo de un presupuesto conserva su ID y actualiza sus movimientos en una transacción; si falla, los datos anteriores permanecen.
+
+Los perfiles son locales y no equivalen a autenticación para un servicio público. El campo histórico `profile_type='demo'` permanece por compatibilidad del esquema. Las sesiones y revisiones son temporales; los presupuestos guardados sí persisten al cerrar el servidor.
+
+Las claves no se registran. Los textos financieros solo se envían a Gemini después del consentimiento. Las revisiones se aíslan por sesión/perfil y la interfaz limpia datos anteriores al cambiar de perfil. No hay conexión bancaria, conversión de monedas ni conciliación automática de devoluciones.
+
+## Verificar
+
+```powershell
+python verify.py
+python -m unittest discover -s tests -v
+python tests/benchmark_api.py
 ```
 
-El archivo `HealthGuideAI.ipynb` corresponde al ejemplo académico utilizado como referencia estructural.
+Prueba opcional de navegador (Microsoft Edge instalado):
 
-## Requisitos
-
-- Una cuenta de Google.
-- Acceso a Google Colab.
-- Una clave de Gemini API creada en Google AI Studio.
-- Acceso a internet para instalar las dependencias y llamar a Gemini.
-
-El notebook instala las siguientes librerías:
-
-```text
-google-genai
-gradio
-pydantic
-pandas
+```powershell
+python -m pip install playwright
+python tests/browser_smoke.py
 ```
 
-## Configuración en Google Colab
+Los tests y el benchmark usan una base temporal y un proveedor simulado inyectado solo en pruebas. No necesitan clave y no afirman medir velocidad ni calidad real de Gemini. `evals/performance_report.json` registra latencia local bajo espera simulada; `evals/browser_report.json` registra los recorridos de interfaz.
 
-### 1. Abrir el notebook
+Los casos financieros offline siguen ejecutándose con:
 
-Sube `SpendWiseAI.ipynb` a Google Drive y ábrelo con Google Colab.
-
-### 2. Crear la clave de Gemini
-
-1. Entra a [Google AI Studio](https://aistudio.google.com/apikey).
-2. Crea o selecciona un proyecto.
-3. Pulsa **Create API key**.
-4. Copia la clave generada.
-
-La clave es privada. No debe pegarse directamente en una celda, publicarse en GitHub ni incluirse en capturas de pantalla.
-
-### 3. Guardar la clave en Colab
-
-1. En la barra lateral izquierda de Colab, abre **Secretos**, identificado con el ícono de una llave.
-2. Selecciona **Agregar un secreto nuevo**.
-3. En el campo de nombre escribe exactamente:
-
-```text
-GEMINI_API_KEY
+```powershell
+python -m evals.run_evals --output evals/offline_report.json
 ```
 
-4. En el campo de valor pega la clave de Gemini.
-5. Activa el interruptor que permite el acceso desde el notebook.
+Para medir Gemini con once casos y tres repeticiones (33 llamadas con consumo de cuota):
 
-El notebook recupera la clave de forma segura mediante:
-
-```python
-from google.colab import userdata
-
-GEMINI_API_KEY = userdata.get("GEMINI_API_KEY")
+```powershell
+python -m evals.run_evals --live --ask-key --repeat 3 --output evals/runs/live.json
 ```
 
-### 4. Seleccionar el modelo
+Los resultados históricos y los materiales académicos anteriores se conservan. Los informes nuevos distinguen pruebas simuladas de llamadas reales. El notebook mantiene su función de laboratorio; no inicia el servidor web.
 
-La configuración debe utilizar un modelo disponible para la cuenta:
+## Archivos principales
 
-```python
-MODEL = "gemini-3.5-flash-lite"
-```
+`app.py`: arranque. `spendwise_api.py`: rutas y ciclo de vida. `spendwise_jobs.py`: trabajos de IA. `spendwise_provider.py`: transporte Gemini compartido por API y evals. `spendwise_service.py`: extracción y revisión. `spendwise_core.py`: números. `spendwise_storage.py`: SQLite. `spendwise_compare.py`: comparación determinista. `web/api.js`: cliente de solicitudes. `web/app.js`: interacción.
 
-Si Google informa que ese modelo dejó de estar disponible, debe sustituirse por el modelo recomendado explícitamente en el mensaje de error o en la documentación actual de Gemini.
+Consulta `docs/arquitectura.md` y `docs/refactor_2026-09-23.md` para las decisiones y límites.
 
-### 5. Ejecutar el notebook
-
-Ejecuta las celdas en orden, comenzando por la celda **0. Configuración**.
-
-Cuando la configuración termine correctamente aparecerá:
-
-```text
-✅ Entorno listo
-```
-
-No es recomendable pulsar **Ejecutar todas** repetidamente, porque cada llamada a Gemini consume cuota.
-
-## Ejemplo de entrada
-
-```text
-Ingreso mensual: 2.800.000 COP
-Arriendo: 900.000
-Mercado: 350.000
-Restaurantes: 300.000
-Uber: 280.000
-Netflix: 26.900
-Spotify: 19.900
-Salidas con amigos: 350.000
-Universidad: 400.000
-```
-
-Para este ejemplo, los cálculos deterministas esperados son:
-
-- Ingreso total: `2.800.000 COP`
-- Gasto total: `2.626.800 COP`
-- Saldo disponible: `173.200 COP`
-- Porcentaje gastado: `93,81 %`
-
-La clasificación de categorías y las recomendaciones son producidas por el componente de IA, pero deben utilizar exclusivamente los movimientos presentes en la entrada.
-
-## División de responsabilidades
-
-### Software determinista
-
-- Validar la presencia del ingreso y los gastos.
-- Verificar que los valores sean numéricos y válidos.
-- Sumar los gastos.
-- Calcular el saldo disponible.
-- Calcular el porcentaje gastado.
-- Validar que el output tenga los campos requeridos.
-
-### Componente de IA
-
-- Interpretar descripciones escritas en lenguaje natural.
-- Extraer y clasificar movimientos.
-- Identificar patrones de gasto.
-- Detectar gastos potencialmente reducibles.
-- Generar recomendaciones basadas en los datos suministrados.
-
-### Usuario
-
-- Revisar el resultado.
-- Corregir datos ambiguos o incompletos.
-- Decidir si aplica las recomendaciones sugeridas.
-
-## Estructura académica del notebook
-
-El notebook conserva la estructura solicitada para el laboratorio:
-
-1. Reality check.
-2. Evaluación de IA frente a software tradicional.
-3. Gemini como crítico del caso.
-4. Contrato mínimo del producto.
-5. Visualización del flujo de IA.
-6. Prototipo ejecutable.
-7. Pruebas adversariales.
-8. Evaluación automática del contrato.
-9. Comparación de ideas.
-10. Pitch de 60 segundos.
-
-## Manejo de errores frecuentes
-
-### `AssertionError: Agrega GEMINI_API_KEY`
-
-El secreto no existe, su nombre no coincide o no tiene habilitado el acceso desde el notebook. Verifica que se llame exactamente `GEMINI_API_KEY`.
-
-### `404 NOT_FOUND`
-
-El modelo configurado ya no está disponible para la cuenta. Cambia la variable `MODEL` por el modelo que Gemini recomiende en el mismo mensaje de error.
-
-### `429 RESOURCE_EXHAUSTED`
-
-Se alcanzó un límite de solicitudes o de cuota. Espera el tiempo de restablecimiento y vuelve a ejecutar solamente la celda que falló.
-
-### `503 UNAVAILABLE`
-
-El modelo está experimentando alta demanda. Es un error temporal del servicio. Espera unos minutos o utiliza otro modelo disponible.
-
-### `ValidationError` en `score`
-
-Gemini puede devolver una puntuación fuera del rango de 0 a 10. Antes de validar el resultado se puede normalizar así:
-
-```python
-try:
-    evaluation_raw["score"] = int(evaluation_raw.get("score", 0))
-except (TypeError, ValueError):
-    evaluation_raw["score"] = 0
-
-evaluation_raw["score"] = max(0, min(evaluation_raw["score"], 10))
-```
-
-## Pruebas incluidas
-
-El prototipo contempla casos para verificar:
-
-- Entrada normal.
-- Ausencia del ingreso mensual.
-- Información contradictoria.
-- Intentos de prompt injection.
-- Gastos superiores al ingreso.
-- Cumplimiento estricto de los campos del contrato.
-
-## Limitaciones
-
-- El prototipo depende de la disponibilidad y la cuota de Gemini.
-- La clasificación puede requerir revisión cuando una descripción sea ambigua.
-- El sistema no accede automáticamente a cuentas bancarias ni extractos.
-- No ofrece asesoría de inversión, crédito, impuestos o decisiones financieras definitivas.
-- Las oportunidades de ahorro son estimaciones y no garantías.
-
-## Seguridad y privacidad
-
-- No publiques la clave de Gemini.
-- Si una clave aparece en una captura o repositorio, elimínala y crea una nueva.
-- Para las pruebas académicas, evita introducir información bancaria sensible.
-- Utiliza datos ficticios o anonimizados cuando sea posible.
-
-## Entregables
-
-El notebook permite obtener:
-
-- Evaluación del caso de uso.
-- Contrato del producto.
-- Diagrama Mermaid.
-- Output del caso normal.
-- Tabla de pruebas adversariales.
-- Resultado de la validación del contrato.
-- Pitch de 60 segundos.
-- Propuesta de evidencia para validar en las siguientes 48 horas.
-
-## Autores
-
-Proyecto desarrollado por Sebastián Giraldo Franco y Miguel Ángel Zuleta Zuleta
+Fuentes técnicas: [FastAPI: lifespan](https://fastapi.tiangolo.com/advanced/events/), [HTTPX: cliente asíncrono](https://www.python-httpx.org/async/), [HTTPX: timeouts](https://www.python-httpx.org/advanced/timeouts/).

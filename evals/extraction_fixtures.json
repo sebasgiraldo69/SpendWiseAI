@@ -1,0 +1,306 @@
+{
+  "notice": "Fixtures manuales para pruebas offline. NO son respuestas reales de Gemini.",
+  "cases": {
+    "budget_happy_path_totals": {
+      "ingreso_total": 2800000,
+      "fuente_ingreso": "Ingreso mensual: 2.800.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Arriendo",
+          "valor": 900000,
+          "categoria": "vivienda",
+          "fuente": "Arriendo: 900.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Mercado",
+          "valor": 350000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 350.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Restaurantes",
+          "valor": 300000,
+          "categoria": "alimentacion",
+          "fuente": "Restaurantes: 300.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Uber",
+          "valor": 280000,
+          "categoria": "transporte",
+          "fuente": "Uber: 280.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Netflix",
+          "valor": 26900,
+          "categoria": "entretenimiento",
+          "fuente": "Netflix: 26.900",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Spotify",
+          "valor": 19900,
+          "categoria": "entretenimiento",
+          "fuente": "Spotify: 19.900",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Salidas con amigos",
+          "valor": 350000,
+          "categoria": "entretenimiento",
+          "fuente": "Salidas con amigos: 350.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Universidad",
+          "valor": 400000,
+          "categoria": "educacion",
+          "fuente": "Universidad: 400.000",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_missing_income": {
+      "ingreso_total": null,
+      "fuente_ingreso": null,
+      "movimientos": [
+        {
+          "descripcion": "Arriendo",
+          "valor": 900000,
+          "categoria": "vivienda",
+          "fuente": "Arriendo: 900.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Mercado",
+          "valor": 350000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 350.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Transporte",
+          "valor": 120000,
+          "categoria": "transporte",
+          "fuente": "Transporte: 120.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_duplicate_ambiguous_rent": {
+      "ingreso_total": 2000000,
+      "fuente_ingreso": "Ingreso mensual: 2.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Arriendo",
+          "valor": 800000,
+          "categoria": "vivienda",
+          "fuente": "Arriendo: 800.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Arriendo",
+          "valor": 900000,
+          "categoria": "vivienda",
+          "fuente": "Arriendo: 900.000 COP para el mismo mes",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Mercado",
+          "valor": 250000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 250.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_prompt_injection": {
+      "ingreso_total": 2000000,
+      "fuente_ingreso": "Ingreso: 2.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": 300000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 300.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_negative_balance_guardrail": {
+      "ingreso_total": 1000000,
+      "fuente_ingreso": "Ingreso: 1.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Arriendo",
+          "valor": 800000,
+          "categoria": "vivienda",
+          "fuente": "Arriendo: 800.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Universidad",
+          "valor": 400000,
+          "categoria": "educacion",
+          "fuente": "Universidad: 400.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Transporte",
+          "valor": 150000,
+          "categoria": "transporte",
+          "fuente": "Transporte: 150.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_zero_income": {
+      "ingreso_total": 0,
+      "fuente_ingreso": "Este mes no tuve ingresos: 0 COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": 50000,
+          "categoria": "alimentacion",
+          "fuente": "Gaste 50.000 COP en mercado",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_colloquial_number_formats": {
+      "ingreso_total": 1200000,
+      "fuente_ingreso": "Me entraron 1.2 millones COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": 50000,
+          "categoria": "alimentacion",
+          "fuente": "$50 mil de mercado",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Bus",
+          "valor": 12500,
+          "categoria": "transporte",
+          "fuente": "12.500 de bus",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_mixed_currencies": {
+      "ingreso_total": 2000000,
+      "fuente_ingreso": "Ingreso: 2.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": 100000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 100.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Suscripcion",
+          "valor": 20,
+          "categoria": "entretenimiento",
+          "fuente": "Suscripcion: 20 USD",
+          "moneda": "USD",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_expense_without_amount": {
+      "ingreso_total": 1500000,
+      "fuente_ingreso": "Ingreso: 1.500.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": null,
+          "categoria": "alimentacion",
+          "fuente": "Compre mercado pero no recuerdo cuanto",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Bus",
+          "valor": 80000,
+          "categoria": "transporte",
+          "fuente": "Bus: 80.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_refund_negative_value": {
+      "ingreso_total": 2000000,
+      "fuente_ingreso": "Ingreso: 2.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Mercado",
+          "valor": 200000,
+          "categoria": "alimentacion",
+          "fuente": "Mercado: 200.000 COP",
+          "moneda": "COP",
+          "tipo": "expense"
+        },
+        {
+          "descripcion": "Devolucion",
+          "valor": 50000,
+          "categoria": null,
+          "fuente": "Me devolvieron 50.000 COP de una compra anterior",
+          "moneda": "COP",
+          "tipo": "refund"
+        }
+      ],
+      "incidencias": []
+    },
+    "budget_ambiguous_category": {
+      "ingreso_total": 2000000,
+      "fuente_ingreso": "Ingreso: 2.000.000 COP",
+      "movimientos": [
+        {
+          "descripcion": "Establecimiento XYZ",
+          "valor": 120000,
+          "categoria": null,
+          "fuente": "Pague 120.000 COP en Establecimiento XYZ, pero no recuerdo que compre",
+          "moneda": "COP",
+          "tipo": "expense"
+        }
+      ],
+      "incidencias": []
+    }
+  }
+}

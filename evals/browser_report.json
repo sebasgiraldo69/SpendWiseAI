@@ -1,0 +1,17 @@
+{
+  "timestamp_utc": "2026-09-23T15:27:09.145551+00:00",
+  "mode": "test_provider_not_real_gemini",
+  "checks": [
+    "Repeated profile changes, no timeout; no sample selector",
+    "Job polling, extraction, human confirmation, savings and persistence",
+    "Stored budget editing recalculates and persists",
+    "Two-period comparison and async explanation",
+    "History detail and goal reductions are functional",
+    "Event estimation requires amounts and confirmation",
+    "History remains responsive during AI; cancellation works",
+    "Switching profile cancels old AI and clears private views",
+    "Desktop and mobile rendered"
+  ],
+  "console_errors": [],
+  "status": "PASS"
+}

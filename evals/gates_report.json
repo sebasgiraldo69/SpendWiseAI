@@ -1,0 +1,69 @@
+{
+  "timestamp_utc": "2026-09-23T15:30:54.944565+00:00",
+  "scope": "Gates propuestos por el equipo. No equivalen a aprobacion oficial.",
+  "technical_pass": true,
+  "all_gates_pass": false,
+  "unit_test_output": "C:\\Users\\EIA2024\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\ntest_cancel (test_api.ApiTests.test_cancel) ... ok\ntest_comparison_and_explanation (test_api.ApiTests.test_comparison_and_explanation) ... ok\ntest_create_profile_and_update_stored_budget (test_api.ApiTests.test_create_profile_and_update_stored_budget) ... ok\ntest_cross_profile_budget_access (test_api.ApiTests.test_cross_profile_budget_access) ... ok\ntest_event_missing_amount_is_not_zero (test_api.ApiTests.test_event_missing_amount_is_not_zero) ... ok\ntest_extraction_review_confirmation (test_api.ApiTests.test_extraction_review_confirmation) ... ok\ntest_forgetting_review_invalidates_cached_job (test_api.ApiTests.test_forgetting_review_invalidates_cached_job) ... ok\ntest_goal_uses_stored_values_and_user_reductions (test_api.ApiTests.test_goal_uses_stored_values_and_user_reductions) ... ok\ntest_identical_requests_deduplicate (test_api.ApiTests.test_identical_requests_deduplicate) ... ok\ntest_job_access_other_session (test_api.ApiTests.test_job_access_other_session) ... ok\ntest_no_fixtures_in_production (test_api.ApiTests.test_no_fixtures_in_production) ... ok\ntest_persistence_and_atomic_replacement (test_api.ApiTests.test_persistence_and_atomic_replacement) ... ok\ntest_repeat_profile_switch_never_deadlocks (test_api.ApiTests.test_repeat_profile_switch_never_deadlocks) ... ok\ntest_scenario_interpretations (test_api.ApiTests.test_scenario_interpretations) ... ok\ntest_slow_ai_does_not_block_profiles_history_or_health (test_api.ApiTests.test_slow_ai_does_not_block_profiles_history_or_health) ... ok\ntest_static_and_origin_checks (test_api.ApiTests.test_static_and_origin_checks) ... ok\ntest_deadline_and_recovery (test_api.JobTests.test_deadline_and_recovery) ... ok\ntest_queue_bounded (test_api.JobTests.test_queue_bounded) ... ok\ntest_quota_not_retried_and_timeout_is_specific (test_api.TransportTests.test_quota_not_retried_and_timeout_is_specific) ... ok\ntest_structured_success_and_single_retry (test_api.TransportTests.test_structured_success_and_single_retry) ... ok\ntest_budget_unique_period (test_phase9.Phase9Tests.test_budget_unique_period) ... ok\ntest_comparison_logic (test_phase9.Phase9Tests.test_comparison_logic) ... ok\ntest_comparison_same_period (test_phase9.Phase9Tests.test_comparison_same_period) ... ok\ntest_event_scenario (test_phase9.Phase9Tests.test_event_scenario) ... ok\ntest_goal_scenario (test_phase9.Phase9Tests.test_goal_scenario) ... ok\ntest_isolation_cross_profile (test_phase9.Phase9Tests.test_isolation_cross_profile) ... ok\ntest_storage_create_and_get (test_phase9.Phase9Tests.test_storage_create_and_get) ... ok\ntest_decimal_rounding (test_spendwise.FinancialTests.test_decimal_rounding) ... ok\ntest_happy_path_exact (test_spendwise.FinancialTests.test_happy_path_exact) ... ok\ntest_injection_controls_need_evidence (test_spendwise.FinancialTests.test_injection_controls_need_evidence) ... ok\ntest_invalid_numbers (test_spendwise.FinancialTests.test_invalid_numbers) ... ok\ntest_negative_income (test_spendwise.FinancialTests.test_negative_income) ... ok\ntest_null_and_zero_income (test_spendwise.FinancialTests.test_null_and_zero_income) ... ok\ntest_source_checked_savings (test_spendwise.FinancialTests.test_source_checked_savings) ... ok\ntest_unknown_expectation_fails (test_spendwise.FinancialTests.test_unknown_expectation_fails) ... ok\ntest_unknown_savings_id (test_spendwise.FinancialTests.test_unknown_savings_id) ... ok\ntest_wrong_sum_and_savings_blocked (test_spendwise.FinancialTests.test_wrong_sum_and_savings_blocked) ... ok\ntest_all_offline_evals (test_spendwise.ReviewTests.test_all_offline_evals) ... ok\ntest_category_correction (test_spendwise.ReviewTests.test_category_correction) ... ok\ntest_duplicate_exclusion (test_spendwise.ReviewTests.test_duplicate_exclusion) ... ok\ntest_foreign_currency_and_refund_cannot_be_summed (test_spendwise.ReviewTests.test_foreign_currency_and_refund_cannot_be_summed) ... ok\ntest_human_confirmation_enforced (test_spendwise.ReviewTests.test_human_confirmation_enforced) ... ok\ntest_malformed_extraction (test_spendwise.ReviewTests.test_malformed_extraction) ... ok\ntest_missing_amount_correction (test_spendwise.ReviewTests.test_missing_amount_correction) ... ok\ntest_no_empty_budget (test_spendwise.ReviewTests.test_no_empty_budget) ... ok\ntest_no_silent_dropped_rows (test_spendwise.ReviewTests.test_no_silent_dropped_rows) ... ok\ntest_omitted_uncertainty_still_flagged (test_spendwise.ReviewTests.test_omitted_uncertainty_still_flagged) ... ok\ntest_preview_does_not_claim_confirmation (test_spendwise.ReviewTests.test_preview_does_not_claim_confirmation) ... ok\ntest_quote_provenance (test_spendwise.ReviewTests.test_quote_provenance) ... ok\ntest_three_historical_failures_surface (test_spendwise.ReviewTests.test_three_historical_failures_surface) ... ok\n\n----------------------------------------------------------------------\nRan 50 tests in 2.069s\n\nOK\n",
+  "offline_score": "11/11",
+  "gates": [
+    {
+      "id": "T1",
+      "name": "Contrato y calculos",
+      "status": "PASS"
+    },
+    {
+      "id": "T2",
+      "name": "Incertidumbre y revision humana",
+      "status": "PASS"
+    },
+    {
+      "id": "T3",
+      "name": "Errores de proveedor y controles HTTP",
+      "status": "PASS"
+    },
+    {
+      "id": "T4",
+      "name": "Regresion con fixtures",
+      "status": "PASS"
+    },
+    {
+      "id": "E1",
+      "name": "Calidad actual de Gemini: 33/33 y cero fallos criticos",
+      "status": "PENDING"
+    },
+    {
+      "id": "E2",
+      "name": "Validacion con usuarios reales",
+      "status": "PENDING"
+    },
+    {
+      "id": "E3",
+      "name": "Correspondencia con rubrica oficial",
+      "status": "PENDING"
+    }
+  ],
+  "source_sha256": {
+    "spendwise_core.py": "25317c6d68caa44244778029dbf3732275a13c7603e5fe5de4d1171ccff5d2f4",
+    "spendwise_service.py": "0b4d51928b2ba5359dabfbddd65ccdcb631460fce74c1e582688b184cb936c0b",
+    "spendwise_provider.py": "aeb1dc5fc8b39a4733dec8febcaa0630cfec088a677ed01a2f375d6b3e2f217e",
+    "evals/run_evals.py": "d2d29f70affab4b7ef8361da3680667a8e06ae2ee773b3f26bdd82587e317819",
+    "evals/eval_cases.json": "873d134ddb5ee66fd9d0cd0379d2247ad981603bfb918e1e59bfad5ff9e1e01b",
+    "evals/extraction_fixtures.json": "9063977bc82ad20d0042345c85650054d21689f47c75b0f3cdb33357c148900c",
+    "app.py": "9eca3427f68465bb034226717e58f83d9b25e736a3801b469581a8176a4b60e7",
+    "verify.py": "404adde69d97db03544be68aa5c5a1e51c5a2181b51c936fbc043184026aebec",
+    "spendwise_api.py": "c57fecd416ffa3d5a678aaca257c4563c2f13036b7b7de2e8f96554781b8eafa",
+    "spendwise_compare.py": "a74d86ffecd4439069df044df6333909507148ed5b8925b8744c2ffa244c9a6e",
+    "spendwise_jobs.py": "fdfb6ee20bb2ebc6746d6b269adaa499f853909265fa7a72ea1c186b4491a9da",
+    "spendwise_storage.py": "7cdc43ac165a6dc1f61bbbd20a7ae7060c5183b541e412c26916204fc5d7be5e",
+    "tests\\test_api.py": "f25f2f6092cbcb6f02806e5332d672b2e47815e226c2b148ed991e753ffd616f",
+    "tests\\test_phase9.py": "827570387cfdf029cdb167b87348cb34cfa0c9ac51d2aa6fbe9238f42d211596",
+    "tests\\test_spendwise.py": "a5c188aa0eaf06dea6dc833c6414d1102942edbdf684d5dfa1259e8ab2a4d437",
+    "web\\api.js": "db31c781effeb635a30543e4df280b5aa33971227be5da0d7cfc4021123ab1f5",
+    "web\\app.js": "dda65808aa58ddef519d3f1fc47e3eec3267d8daea256f76b8eb4d5eea637f1c",
+    "web\\index.html": "1a58f88bb6a22711265ca082ca537e5e50ff7b1b97953814a4cfc4c2ad5fd57a",
+    "web\\pitch.css": "b03aa1901434b53f12107c07c83353bfecb33c5aacbf399ee37e941099b9495a",
+    "web\\pitch.html": "c12914f373db6d0f376067a8fed63dc8b7e4165c9f1476a6ac8f204ed0267b76",
+    "web\\pitch.js": "78a00af05a41c1f23f0a339adc406c870573db8fed1ee66d036e092d68e80e7f",
+    "web\\styles.css": "bc0079c2479dbfb1ee62b8d1c344aa11d117c1fc61a43fe522b7615bf80a6d87"
+  }
+}
