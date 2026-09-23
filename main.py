@@ -219,6 +219,26 @@ def calculate_scenario_endpoint(req: ScenarioCalculateRequest):
         result = calculate_event_scenario(req.budget_income, req.budget_expense, items)
     return {"result": result, "type": req.type}
 
+from planning import ChatRequest, respond as respond_to_plan
+
+
+@app.post('/api/plan/chat')
+def plan_chat(req: ChatRequest):
+    if not req.consent:
+        return JSONResponse(status_code=400, content={'error': 'Autoriza enviar la conversación y el presupuesto a Gemini.'})
+    if not req.text.strip():
+        return JSONResponse(status_code=400, content={'error': 'Escribe un mensaje.'})
+    budget = get_budget(req.budget_id) if req.budget_id else None
+    if req.budget_id and not budget:
+        return JSONResponse(status_code=404, content={'error': 'El presupuesto ya no existe. Selecciona otro.'})
+    try:
+        return respond_to_plan(req, budget)
+    except ValueError:
+        return JSONResponse(status_code=502, content={'error': 'La propuesta no pasó la validación. Puedes volver a enviar tu mensaje.'})
+    except Exception:
+        return JSONResponse(status_code=503, content={'error': 'Gemini no pudo responder ahora. Tu conversación se conserva; puedes reintentar.'})
+
+
 # Fallback for static files and frontend
 app.mount("/", StaticFiles(directory=str(ROOT / "web"), html=True), name="web")
 
