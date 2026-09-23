@@ -1,4 +1,4 @@
-﻿# Arquitectura de SpendWise AI
+# Arquitectura de SpendWise AI
 
 ## Canal elegido: web app local
 
@@ -6,40 +6,37 @@ La entrega es una aplicación web accesible desde navegador y ejecutada con Pyth
 
 ## Flujo implementado
 
+## Flujo y Persistencia Implementada
+
 ```mermaid
 flowchart TD
-    U[Usuario: texto del mismo mes] --> M{Modo}
-    M -->|Gemini real + consentimiento| G[Gemini: extracción JSON con esquema]
-    M -->|Ensayo identificado| F[Fixture manual de ejemplo]
-    G --> V[Validar esquema, tipos y citas literales]
-    F --> V
-    V --> I[Detectar pendientes y proponer inclusiones]
-    I --> H[Persona revisa ingreso, montos, categorías y exclusiones]
-    H -->|Corregir entrada| U
-    H -->|Confirmar| C[Python: sumas, saldo, categorías y porcentaje]
-    C --> S[Escenario opcional del usuario: reducir 10% gastos elegidos]
-    S --> O[Validar contrato, procedencia y ahorro]
-    O --> R[Resumen, trazabilidad y descarga JSON]
-    G -->|Error o timeout| E[Error visible; no entregar presupuesto]
-    V -->|Inválido| E
-    O -->|Inválido| E
-    T[Evals y pruebas] -. verifican .-> V
-    T -. verifican .-> C
-    T -. verifican .-> O
+    U[Usuario: interfaz web] --> API[API local app.py]
+    API --> AUTH[Sesión de perfil demo]
+    API --> SERVICE[Servicio SpendWise]
+    SERVICE --> AGENT[Agente Gemini: extracción/explicación]
+    SERVICE --> CORE[Cálculo determinista compare/scenarios]
+    SERVICE --> DB[(SQLite data/spendwise.db)]
+    AGENT --> REVIEW[Revisión de persona]
+    CORE --> REVIEW
+    REVIEW -->|confirmación| DB
+    DB --> COMP[Comparador de periodos]
+    COMP --> CORE
+    COMP --> AGENT
+    DB --> SCEN[Servicio de escenarios]
+    SCEN --> CORE
+    U --> REVIEW
 ```
 
 ## Responsabilidades reales
 
 | Componente | Responsabilidad | Frontera |
 |---|---|---|
-| Navegador | Entrada, consentimiento, corrección, confirmación, visualización y descarga | No recibe la API key ni decide cifras por sí solo |
-| `call_gemini` | Una llamada REST con esquema JSON, timeout de 40 segundos y manejo de errores | Interpreta; no calcula ni aconseja |
-| `validate_extraction` | Campos exactos, tipos, moneda, categoría y citas presentes en el texto | No demuestra que la semántica sea correcta |
-| `prepare_review` | Incidencias explícitas, exclusiones conservadoras y preview provisional | Nunca marca confirmación humana automáticamente |
-| `confirm_review` | Confirmación obligatoria, mismos IDs, correcciones y exclusiones | Bloquea devoluciones/monedas extranjeras incluidas |
-| `calculate_financials` | Aritmética decimal, categorías, saldo y porcentaje | No interpreta lenguaje natural |
-| `build_output` | Escenario de reducción elegido por usuario | El modelo no inventa ahorro ni determina qué gasto es reducible |
-| `validate_financial_output` | Contrato, sumas, tipos, escenario y fuente de movimientos | No equivale a evaluación de utilidad con usuarios |
+| Navegador | Entrada, consentimiento, historial, comparación, escenarios | No recibe la API key ni decide cifras por sí solo |
+| `app.py` / API | Validar solicitudes, identificar perfil, llamar servicios | No confía en un profile_id del cliente sin validarlo |
+| Servicio de historial (`spendwise_storage`) | Crear, listar, leer y modificar presupuestos y perfiles en SQLite | No guarda antes de la confirmación humana explícita |
+| `spendwise_core` | Aritmética decimal, comparar meses, saldo, porcentaje y escenarios | No interpreta lenguaje natural ni inventa diferencias |
+| Agente Gemini | Extraer movimientos y explicar cambios deterministas proporcionados | No calcula montos ni ejecuta acciones financieras |
+| SQLite | Persistir perfiles, presupuestos, y movimientos de forma local | No almacena contraseñas (perfiles demo) ni es pública |
 
 ## AI native y baseline sin IA
 

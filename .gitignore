@@ -1,4 +1,4 @@
-﻿__pycache__/
+__pycache__/
 *.py[cod]
 .env
 .venv/
@@ -6,3 +6,12 @@
 evals/runs/
 artifacts/browser/
 .tmp-tools/
+data/
+*.db
+*.db-journal
+*.db-wal
+data/spendwise.db
+data/spendwise.db-journal
+data/spendwise.db-wal
+data/spendwise.db-shm
+artifacts/

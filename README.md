@@ -1,4 +1,4 @@
-﻿# SpendWise AI
+# SpendWise AI
 
 Web app académica para convertir gastos en lenguaje natural en un presupuesto revisable. **La IA interpreta, el código calcula y la persona confirma.**
 
@@ -10,9 +10,13 @@ Requiere Python 3.10 o superior. La aplicación usa la biblioteca estándar: no 
 python app.py
 ```
 
-Abre **http://127.0.0.1:8000**. La presentación está en **http://127.0.0.1:8000/pitch**: siete diapositivas, temporizador de seis minutos y opción de imprimir o guardar como PDF.
+Abre **http://127.0.0.1:8000**. La presentación está en **http://127.0.0.1:8000/pitch**.
 
-El modo **Ensayo** funciona sin internet con once ejemplos predefinidos. Las extracciones son fixtures escritos manualmente, no respuestas reales de una IA. Para editar texto libre, usa el modo Gemini.
+### Perfiles de demostración y Base de Datos (SQLite)
+El sistema incluye soporte de perfiles y persistencia usando SQLite. Los perfiles de demostración (ej. Ana Demo, Carlos Demo) se crean automáticamente al arrancar. La base de datos se almacena en el archivo `data/spendwise.db` relativo a la raíz del proyecto.
+Para **borrar todos los datos locales**, simplemente detén el servidor y elimina el archivo `data/spendwise.db` o la carpeta `data/`. No se guardan datos fuera de ese archivo y no se envía el historial a la nube.
+
+El modo **Ensayo** funciona sin internet con ejemplos predefinidos. Para extraer de texto libre, usa el modo Gemini.
 
 ## Usar Gemini
 

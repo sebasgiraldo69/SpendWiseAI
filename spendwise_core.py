@@ -1,4 +1,4 @@
-﻿"""Pure financial operations. No model, network or persistence."""
+"""Pure financial operations. No model, network or persistence."""
 from decimal import Decimal, ROUND_HALF_UP
 from math import isfinite
 from numbers import Real
@@ -148,3 +148,124 @@ def evaluate_expected(output, expected, trace=None):
 
 def matches_expected(output, expected, trace=None):
     return not evaluate_expected(output, expected, trace)
+
+
+# --- Scenario calculations ---
+
+def calculate_goal_scenario(budget_expense, budget_income, target_amount, reductions):
+    """Calculate a savings-goal scenario: how much is freed vs. target.
+
+    Args:
+        budget_expense: current total expense (number).
+        budget_income: current income or None.
+        target_amount: desired amount to free (number, positive).
+        reductions: list of dicts with 'category', 'description', 'current_amount', 'reduce_by'.
+            reduce_by is an absolute COP amount, not a percentage.
+
+    Returns dict with:
+        target_amount, total_reduced, remaining_gap, new_expense, new_balance,
+        reductions (annotated), feasible (bool), warnings.
+    """
+    target = money(target_amount)
+    if target <= 0:
+        raise ValueError('La meta debe ser un monto positivo.')
+    if not isinstance(reductions, list) or len(reductions) > 100:
+        raise ValueError('Se permiten hasta 100 reducciones.')
+    total_reduced = Decimal(0)
+    annotated = []
+    warnings = []
+    for r in reductions:
+        current = money(r.get('current_amount', 0))
+        cut = money(r.get('reduce_by', 0))
+        if cut < 0:
+            raise ValueError('La reducción no puede ser negativa.')
+        if cut > current:
+            raise ValueError(f'La reducción ({cut}) supera el gasto actual ({current}).')
+        if r.get('category') not in CATEGORIES:
+            raise ValueError('Categoría inválida en reducción.')
+        total_reduced += cut
+        annotated.append({
+            'category': r['category'],
+            'description': r.get('description', ''),
+            'current_amount': float(current),
+            'reduce_by': float(cut),
+            'new_amount': float(current - cut),
+        })
+    expense = money(budget_expense)
+    new_expense = expense - total_reduced
+    gap = target - total_reduced
+    new_balance = None
+    if budget_income is not None:
+        inc = money(budget_income)
+        new_balance = float(inc - new_expense)
+    if new_expense < 0:
+        warnings.append('El escenario produce gastos negativos; revisa las reducciones.')
+    return {
+        'target_amount': float(target),
+        'total_reduced': float(total_reduced),
+        'remaining_gap': float(gap) if gap > 0 else 0.0,
+        'reached_target': gap <= 0,
+        'new_expense': float(new_expense),
+        'new_balance': new_balance,
+        'reductions': annotated,
+        'feasible': gap <= 0 and new_expense >= 0,
+        'warnings': warnings,
+    }
+
+
+def calculate_event_scenario(budget_income, budget_expense, event_items):
+    """Calculate an event-planning scenario: total cost vs. available balance.
+
+    Args:
+        budget_income: income or None.
+        budget_expense: total confirmed expense (number).
+        event_items: list of dicts with 'description', 'estimated_amount', optional 'source'.
+
+    Returns dict with:
+        event_total, budget_balance, remaining_after_event, items (annotated),
+        affordable (bool or None), warnings.
+    """
+    if not isinstance(event_items, list) or len(event_items) > 50:
+        raise ValueError('Se permiten hasta 50 partidas de evento.')
+    if not event_items:
+        raise ValueError('Incluye al menos una partida para el evento.')
+    total = Decimal(0)
+    items = []
+    warnings = []
+    for item in event_items:
+        desc = item.get('description', '')
+        if not isinstance(desc, str) or not desc.strip():
+            raise ValueError('Cada partida necesita una descripción.')
+        amt = money(item.get('estimated_amount', 0))
+        if amt < 0:
+            raise ValueError('Los montos estimados no pueden ser negativos.')
+        total += amt
+        items.append({
+            'description': desc.strip(),
+            'estimated_amount': float(amt),
+            'source': item.get('source', 'Estimación del usuario'),
+        })
+
+    expense = money(budget_expense)
+    balance = None
+    remaining = None
+    affordable = None
+    if budget_income is not None:
+        inc = money(budget_income)
+        balance = float(inc - expense)
+        remaining = float(inc - expense - total)
+        affordable = remaining >= 0
+    else:
+        warnings.append('Sin ingreso confirmado; no se puede determinar si el evento es viable.')
+
+    if total == 0:
+        warnings.append('El costo total del evento es cero; revisa las partidas.')
+
+    return {
+        'event_total': float(total),
+        'budget_balance': balance,
+        'remaining_after_event': remaining,
+        'items': items,
+        'affordable': affordable,
+        'warnings': warnings,
+    }
