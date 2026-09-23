@@ -28,7 +28,7 @@ def main():
             'unit_test_output':tests.stdout+tests.stderr,'offline_score':f"{suite['passed']}/{suite['total']}",
             'gates':gates,'source_sha256':{**suite['source_sha256'],
                 **{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
-                   for p in [ROOT/'app.py',ROOT/'verify.py',*sorted((ROOT/'tests').glob('test_*.py')),*sorted((ROOT/'web').glob('*'))]}}}
+                   for p in [ROOT/'app.py',ROOT/'verify.py',*sorted(ROOT.glob('spendwise_*.py')),*sorted((ROOT/'tests').glob('test_*.py')),*sorted((ROOT/'web').glob('*'))]}}}
     (ROOT/'evals/gates_report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(tests.stdout+tests.stderr)
     print('Offline:',report['offline_score'])

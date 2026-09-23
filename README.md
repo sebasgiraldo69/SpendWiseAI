@@ -1,105 +1,113 @@
-# SpendWise AI
+﻿# SpendWise AI
 
-Web app académica para convertir gastos en lenguaje natural en un presupuesto revisable. **La IA interpreta, el código calcula y la persona confirma.**
+Aplicación local para analizar ingresos y gastos con Gemini, confirmar la interpretación, guardar presupuestos por perfil, comparar meses y planear metas o eventos.
 
-## Abrir la aplicación
+## Ejecutar
 
-Requiere Python 3.10 o superior. La aplicación usa la biblioteca estándar: no hay dependencias obligatorias que instalar.
-
-```powershell
-python app.py
-```
-
-Abre **http://127.0.0.1:8000**. La presentación está en **http://127.0.0.1:8000/pitch**.
-
-### Perfiles de demostración y Base de Datos (SQLite)
-El sistema incluye soporte de perfiles y persistencia usando SQLite. Los perfiles de demostración (ej. Ana Demo, Carlos Demo) se crean automáticamente al arrancar. La base de datos se almacena en el archivo `data/spendwise.db` relativo a la raíz del proyecto.
-Para **borrar todos los datos locales**, simplemente detén el servidor y elimina el archivo `data/spendwise.db` o la carpeta `data/`. No se guardan datos fuera de ese archivo y no se envía el historial a la nube.
-
-El modo **Ensayo** funciona sin internet con ejemplos predefinidos. Para extraer de texto libre, usa el modo Gemini.
-
-## Usar Gemini
+Python 3.10 o superior. Instalar las dependencias del nuevo servidor una vez:
 
 ```powershell
+python -m pip install -r requirements.txt
 python app.py --ask-key
 ```
 
-Pega la API key en la entrada oculta de la terminal, nunca en el chat ni en archivos del repositorio. Solo se conserva en memoria del proceso. También se admite la variable de entorno `GEMINI_API_KEY`.
+Pega la clave cuando la terminal la solicite (entrada oculta). Abre **http://127.0.0.1:8000**. Deja la terminal abierta.
 
-El modelo configurado por defecto es `gemini-3.5-flash-lite`, conservando la configuración histórica del equipo. Su disponibilidad con esta cuenta no ha sido comprobada. Si corresponde, cambia `GEMINI_MODEL` antes de arrancar:
+Si tenías el servidor anterior abierto, detenlo con Ctrl+C antes de iniciar esta versión. Recarga el navegador con Ctrl+F5. El cambio de arquitectura requiere reiniciar el proceso; actualizar archivos no modifica un servidor que ya está ejecutándose.
 
-```powershell
-$env:GEMINI_MODEL = 'nombre-del-modelo-disponible-en-tu-cuenta'
-python app.py --ask-key
-```
+También se admite `GEMINI_API_KEY` como variable de entorno y `python app.py --port 8001`. `GEMINI_MODEL` permite elegir un modelo disponible en la cuenta; por defecto conserva `gemini-3.5-flash-lite`. La disponibilidad de ese modelo depende del proveedor y la cuenta. No se guarda la clave en SQLite ni en el navegador.
 
-Selecciona **Gemini · interpretación real** y autoriza el envío del texto al proveedor. Se hace una llamada de extracción por solicitud, sin reintentos automáticos que consuman cuota. La aplicación muestra errores de clave, modelo, cuota, respuesta inválida y tiempo de espera. No cambia a simulación silenciosamente.
+## Flujo actual
 
-Integración basada en la [documentación oficial de salidas estructuradas de Gemini](https://ai.google.dev/gemini-api/docs/generate-content/structured-output?hl=en). Consulta el [catálogo oficial](https://ai.google.dev/gemini-api/docs/models) para disponibilidad de modelos.
+1. Selecciona un perfil local o crea uno con **+ Perfil**.
+2. Indica el periodo, escribe ingresos/gastos y autoriza el envío a Gemini.
+3. Pulsa **Analizar gastos**. Puedes navegar al historial mientras el trabajo está en curso, cancelarlo o cambiar de perfil.
+4. Revisa/corrige los movimientos y confirma el presupuesto. Los cálculos son deterministas en Python.
+5. Guarda el mes. En **Historial** puedes verlo, editarlo o eliminarlo. Reemplazar un mes existente requiere confirmación.
+6. En **Comparar**, selecciona dos meses del perfil. Las diferencias se calculan localmente; la explicación de Gemini se solicita por separado.
+7. En **Planear**, selecciona un presupuesto y describe una meta o evento. Ajusta reducciones o montos, confirma los supuestos y calcula el escenario.
 
-## Flujo de uso
+Ya no hay selector de ensayo ni ejemplos precargados en la aplicación. Los fixtures permanecen exclusivamente en los evals y tests. No se cambia de Gemini a simulación cuando ocurre un error.
 
-1. Pega ingresos y gastos del mismo mes, o carga un ejemplo.
-2. Revisa el ingreso, cada monto, categoría y cita de origen.
-3. Completa los datos dudosos o excluye explícitamente los movimientos. Monedas extranjeras y devoluciones se excluyen y deben conciliarse fuera del presupuesto; no se convierten ni se restan automáticamente.
-4. Opcionalmente, selecciona gastos para simular una reducción del 10%. El ahorro se calcula con código a partir de esa selección; no es una promesa del modelo.
-5. Confirma la revisión y consulta el resumen. Puedes volver a corregir y descargar el JSON, identificado como simulado o real.
+## Arquitectura del refactor
 
-Ingreso ausente → saldo y porcentaje `null`. Ingreso cero → porcentaje `null`. Una categoría desconocida se muestra como `otros`, conserva el importe y exige revisión. Los montos usan hasta dos decimales, redondeo decimal HALF_UP y límite de un billón de COP.
+- **FastAPI + Uvicorn:** API REST asíncrona; validación y errores HTTP consistentes.
+- **HTTPX:** cliente Gemini reutilizable con conexiones persistentes, timeout de conexión de 5 s y de lectura de 25 s.
+- **Trabajos de IA:** creación HTTP 202, consulta de estado, resultado y cancelación. Máximo dos llamadas simultáneas, ocho trabajos activos globales y dos por sesión. Límite total de 40 s incluyendo espera en cola.
+- **SQLite:** conexión por operación, transacciones, claves foráneas y modo WAL. No se comparte una conexión mutable entre todas las solicitudes.
+- **JavaScript modular:** cliente HTTP único, consultas locales limitadas a 8 s, polling cada 700 ms y descarte de respuestas de perfiles anteriores. Se bloquea el botón de la operación, no toda la interfaz.
 
-## Comprobar el proyecto
+El bloqueo previo provenía de adquirir un `threading.Lock` dentro de otro bloque que ya poseía ese mismo candado al cambiar de perfil. Esto también podía detener la limpieza del servidor. Ese mecanismo fue eliminado; las sesiones y trabajos los administra el event loop.
+
+La API no puede garantizar que Gemini genere instantáneamente. Sí evita que su espera bloquee perfiles/historial, limita el tiempo total y permite cancelar. Hay un único reintento breve para HTTP 502/503/504; no se reintentan automáticamente cuotas, credenciales o respuestas inválidas.
+
+Solicitudes de IA idénticas dentro de una misma sesión se deduplican hasta 120 s. Cambiar de perfil invalida trabajos y revisiones; olvidar una revisión elimina su entrada reutilizable. Los resultados de trabajo expiran a los cinco minutos. El historial tiene una caché de interfaz de diez segundos que se invalida al guardar, editar o borrar.
+
+## API
+
+Contrato OpenAPI: **http://127.0.0.1:8000/openapi.json**. Estado local: `/api/health`.
+
+| Método y ruta | Uso |
+|---|---|
+| `GET /api/config` | Configuración y sesión local |
+| `GET/POST /api/profiles` | Listar/crear perfiles |
+| `POST /api/profile/select` | Cambiar perfil y cancelar trabajo anterior |
+| `POST /api/extract` | Crear trabajo de extracción (202) |
+| `GET/DELETE /api/jobs/{id}` | Estado/resultado o cancelación |
+| `POST /api/confirm` | Confirmar datos y calcular |
+| `POST /api/forget` | Descartar revisión |
+| `GET/POST /api/budgets` | Historial/guardar mes |
+| `GET/PUT/DELETE /api/budgets/{id}` | Leer, editar, eliminar |
+| `POST /api/compare` | Comparar con datos almacenados |
+| `POST /api/compare/explanation` | Trabajo de explicación (202) |
+| `POST /api/scenarios/interpret` | Trabajo de meta/evento (202) |
+| `POST /api/scenarios/calculate` | Calcular supuestos confirmados con el presupuesto guardado |
+
+Los endpoints de IA devuelven un objeto con `id`, `status`, `result`, `error`. Estados: `queued`, `running`, `done`, `error`, `cancelled`. El cliente consulta el mismo ID; no repite el POST en cada consulta. Los endpoints locales no llaman a Gemini.
+
+## Datos y compatibilidad
+
+Se mantiene `data/spendwise.db` y el esquema existente. **No se borra el historial ni se reinician los perfiles al actualizar.** `SPENDWISE_DB_PATH` permite usar otra ubicación. El reemplazo de un presupuesto conserva su ID y actualiza sus movimientos en una transacción; si falla, los datos anteriores permanecen.
+
+Los perfiles son locales y no equivalen a autenticación para un servicio público. El campo histórico `profile_type='demo'` permanece por compatibilidad del esquema. Las sesiones y revisiones son temporales; los presupuestos guardados sí persisten al cerrar el servidor.
+
+Las claves no se registran. Los textos financieros solo se envían a Gemini después del consentimiento. Las revisiones se aíslan por sesión/perfil y la interfaz limpia datos anteriores al cambiar de perfil. No hay conexión bancaria, conversión de monedas ni conciliación automática de devoluciones.
+
+## Verificar
 
 ```powershell
 python verify.py
 python -m unittest discover -s tests -v
+python tests/benchmark_api.py
+```
+
+Prueba opcional de navegador (Microsoft Edge instalado):
+
+```powershell
+python -m pip install playwright
+python tests/browser_smoke.py
+```
+
+Los tests y el benchmark usan una base temporal y un proveedor simulado inyectado solo en pruebas. No necesitan clave y no afirman medir velocidad ni calidad real de Gemini. `evals/performance_report.json` registra latencia local bajo espera simulada; `evals/browser_report.json` registra los recorridos de interfaz.
+
+Los casos financieros offline siguen ejecutándose con:
+
+```powershell
 python -m evals.run_evals --output evals/offline_report.json
 ```
 
-`verify.py` ejecuta pruebas e invariantes y genera `evals/gates_report.json`. Su código de salida refleja solo los gates técnicos; `all_gates_pass` permanece falso mientras falten evidencias externas.
-
-Para evaluar el modelo real, se requieren 33 llamadas (11 casos × 3 repeticiones), sujetas a cuota y costo de la cuenta:
+Para medir Gemini con once casos y tres repeticiones (33 llamadas con consumo de cuota):
 
 ```powershell
 python -m evals.run_evals --live --ask-key --repeat 3 --output evals/runs/live.json
 ```
 
-Los reportes registran modelo, versión del prompt, hashes de código/dataset, resultados individuales, extracción, incidencias, latencia y consumo de tokens cuando el proveedor lo informa. No contienen la clave. Los casos son sintéticos.
+Los resultados históricos y los materiales académicos anteriores se conservan. Los informes nuevos distinguen pruebas simuladas de llamadas reales. El notebook mantiene su función de laboratorio; no inicia el servidor web.
 
-## Evidencia y límites
+## Archivos principales
 
-- Histórico original: **4/5 → 5/5**; no todos los textos del baseline eran idénticos a los de la suite versionada.
-- Última suite histórica con Gemini: **8/11**. Falló comunicar gasto sin monto, devolución y categoría ambigua.
-- Suite actual offline: **11/11 con fixtures manuales**. Esto prueba el software, no la calidad de Gemini.
-- Nueva evaluación real de Gemini: **pendiente por credencial no configurada**.
-- Pruebas con usuarios y rúbrica oficial: **pendientes**; no se inventaron entrevistas, métricas ni aprobaciones.
+`app.py`: arranque. `spendwise_api.py`: rutas y ciclo de vida. `spendwise_jobs.py`: trabajos de IA. `spendwise_provider.py`: transporte Gemini compartido por API y evals. `spendwise_service.py`: extracción y revisión. `spendwise_core.py`: números. `spendwise_storage.py`: SQLite. `spendwise_compare.py`: comparación determinista. `web/api.js`: cliente de solicitudes. `web/app.js`: interacción.
 
-Una cita existente demuestra procedencia textual, pero no garantiza que el monto o la categoría se hayan interpretado correctamente. Las reglas de respaldo para incertidumbre cubren expresiones concretas, no todo el lenguaje español. Por eso siempre hay revisión humana.
+Consulta `docs/arquitectura.md` y `docs/refactor_2026-09-23.md` para las decisiones y límites.
 
-## Entregables
-
-| Archivo | Contenido |
-|---|---|
-| `app.py`, `web/` | Web app local y presentación navegable |
-| `spendwise_service.py` | Extracción estructurada, validación, incidencias y revisión |
-| `spendwise_core.py` | Cálculos, escenarios y contrato determinista |
-| `SpendWiseAI.ipynb` | Notebook actualizado para explorar y ejecutar evals |
-| `docs/SpendWiseAI_historico.ipynb` | Notebook original preservado con outputs históricos |
-| `docs/arquitectura.md` | Flujo real, fronteras y decisiones |
-| `docs/gates.md` | Criterios propuestos, evidencia y pendientes |
-| `docs/pitch_6_minutos.md` | Guion cronometrado para dos integrantes y plan de demo |
-| `docs/SpendWiseAI_pitch.pdf` | Siete diapositivas listas para presentar |
-| `docs/validacion_usuarios.md` | Protocolo y plantilla de resultados sin fabricar evidencia |
-| `evals/` | Casos, fixtures, runner y reportes |
-| `tests/` | Regresiones de dominio, servicio y HTTP |
-
-La prueba opcional `python tests/browser_smoke.py` requiere Playwright y Microsoft Edge instalados. No es una dependencia de la aplicación. Verifica los once ejemplos, correcciones, exportación, pantalla móvil y pitch; genera capturas en `artifacts/browser/` y el reporte `evals/browser_report.json`.
-
-## Privacidad y alcance
-
-Servidor enlazado solo a `127.0.0.1`, pensado para demostración local. No es un despliegue público: no incluye cuentas, autenticación de usuarios, base de datos ni controles operativos de producción. Las revisiones permanecen en memoria hasta 30 minutos, se eliminan al iniciar un nuevo presupuesto y desaparecen al detener el servidor. No se registran entradas ni claves en logs. La descarga JSON es una decisión explícita del usuario y puede contener datos financieros.
-
-En modo Gemini el texto se envía al proveedor. La retención del proveedor está fuera del control de este prototipo; usa datos ficticios para la exposición. No hay conexión bancaria ni decisiones automáticas sobre dinero.
-
-## Autores
-
-Sebastián Giraldo Franco y Miguel Ángel Zuleta Zuleta · Makers AI Product.
+Fuentes técnicas: [FastAPI: lifespan](https://fastapi.tiangolo.com/advanced/events/), [HTTPX: cliente asíncrono](https://www.python-httpx.org/async/), [HTTPX: timeouts](https://www.python-httpx.org/advanced/timeouts/).

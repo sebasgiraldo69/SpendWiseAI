@@ -45,7 +45,7 @@ Antes de empezar, decir la frase correspondiente:
 
 ## 4:00–4:45 · Evals · Sebastián
 
-“En la suite original pasamos de cuatro a cinco casos aprobados, aunque dos entradas del baseline eran equivalentes y no idénticas. Al ampliar a once, la ejecución histórica de Gemini aprobó ocho. Los tres fallos mostraron que los números podían cuadrar sin comunicar incertidumbre. Hoy tenemos once de once pruebas offline con extracciones manuales y pruebas de regresión para cálculo, revisión y errores. Eso verifica el software; no significa once de once en Gemini. La nueva evaluación real requiere configurar la clave y repetir los once casos tres veces.”
+“En la suite original pasamos de cuatro a cinco casos aprobados, aunque dos entradas del baseline eran equivalentes y no idénticas. Al ampliar a once, la ejecución histórica de Gemini aprobó ocho. Los tres fallos mostraron que los números podían cuadrar sin comunicar incertidumbre. Hoy tenemos once de once casos offline con extracciones manuales y 35 pruebas automáticas aprobadas. Eso verifica el software; no significa once de once en Gemini. Ya observamos una interpretación real en la interfaz, pero falta registrar la evaluación completa de la nueva versión: once casos repetidos tres veces.”
 
 Si ya se ejecutó la suite real, sustituir únicamente la última frase por el score real y su modelo/fecha. Conservar los fallos, si los hubo; no extrapolar un resultado offline.
 
@@ -77,3 +77,7 @@ Si ya se ejecutó la suite real, sustituir únicamente la última frase por el s
 **¿El 11/11 mide Gemini?** No: mide software con fixtures. El último resultado histórico de Gemini es 8/11 hasta que se registre una ejecución nueva.
 
 **¿Está listo para producción?** No. Esta entrega es local y académica; falta evaluación real actual, prueba de utilidad y operación segura para despliegue público.
+
+**¿Por qué no sumó el ingreso adicional de EIA?** La entrada decía ingreso mensual 2.800.000 e ingreso de trabajo EIA 1.000.000. Gemini conservó el primer valor y preguntó si debía sumar el segundo. Podría estar incluido en el total mensual. Si es adicional, la persona edita el total a 3.800.000. La interfaz actual tiene un único campo de ingreso; no una tabla de fuentes ni un botón para resolver esa pregunta automáticamente. Es una limitación de interacción, no un fallo de la resta final.
+
+**¿Qué parte fue desarrollada con asistencia de IA?** La implementación y documentación recibieron asistencia de Codex. Eso es distinto del flujo AI native del producto, en el que Gemini interpreta datos del usuario. El equipo debe revisar el código, comprobar resultados y explicar las decisiones; no atribuirse pruebas con usuarios que no realizó.

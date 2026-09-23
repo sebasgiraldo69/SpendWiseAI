@@ -1,91 +1,110 @@
-"""Optional real-browser check. Install Playwright; uses installed Chrome/Edge."""
+﻿"""Browser regression with a test-only provider; no real Gemini quality claim."""
 import json
 from datetime import datetime, timezone
-import hashlib
 from pathlib import Path
+import socket
 import sys
+import tempfile
 import threading
-
+import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'.tmp-tools'))
 from playwright.sync_api import sync_playwright, expect
-import app
+import uvicorn
+from spendwise_api import create_app
+from test_api import FakeProvider, CASE
+
 
 def main():
-    output=ROOT/'artifacts/browser'
-    output.mkdir(parents=True,exist_ok=True)
-    server=app.LocalServer(('127.0.0.1',0),app.Handler)
-    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
-    base=f'http://127.0.0.1:{server.server_port}'
-    errors=[]
-    checks=[]
-    try:
-        with sync_playwright() as p:
-            browser=p.chromium.launch(channel='msedge',headless=True)
-            page=browser.new_page(viewport={'width':1440,'height':1000},device_scale_factor=1)
-            page.on('pageerror',lambda error:errors.append(str(error)))
-            page.goto(base)
-            expect(page.locator('#input')).not_to_have_value('')
-            page.screenshot(path=str(output/'01-entrada-simulada.png'),full_page=True)
-            page.click('#extract');page.wait_for_selector('#review:visible')
-            assert page.locator('#rows tr').count()==8
-            page.locator('#rows tr').nth(2).locator('.simulate').check()
-            page.check('#confirmed');page.click('#confirm');page.wait_for_selector('#result:visible')
-            assert '173.200' in page.locator('#total-balance').inner_text()
-            assert '30.000' in page.locator('#saving').inner_text()
-            assert 'SIMULADO' in page.locator('#result-mode').inner_text()
-            page.screenshot(path=str(output/'02-presupuesto-simulado.png'),full_page=True)
-            with page.expect_download() as info:page.click('#download')
-            download=info.value
-            report=json.loads(Path(download.path()).read_text(encoding='utf-8'))
-            assert report['output']['ahorro_potencial']==30000
-            checks.append('Normal flow, user-selected savings, simulated label, JSON export')
-            page.click('#restart');page.select_option('#example','8');page.click('#extract');page.wait_for_selector('#review:visible')
-            assert 'Falta el monto' in page.locator('#issues').inner_text()
-            row=page.locator('#rows tr').first
-            row.locator('.amount').fill('100000');row.locator('.include').check()
-            page.screenshot(path=str(output/'03-correccion-simulada.png'),full_page=True)
-            page.check('#confirmed');page.click('#confirm');page.wait_for_selector('#result:visible')
-            assert '180.000' in page.locator('#total-expense').inner_text()
-            assert '1.320.000' in page.locator('#total-balance').inner_text()
-            checks.append('Missing amount visible, corrected, included, recalculated')
-            page.click('#edit-review');page.wait_for_selector('#review:visible')
-            assert not page.locator('#confirmed').is_checked()
-            page.click('#back');page.wait_for_selector('#entry:visible')
-            for index in range(11):
-                page.select_option('#example',str(index));page.click('#extract');page.wait_for_selector('#review:visible')
+    errors=[];checks=[]
+    folder=ROOT/'artifacts/browser';folder.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp:
+        provider=FakeProvider(.3)
+        application=create_app(str(Path(temp)/'browser.db'),provider)
+        sock=socket.socket();sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
+        server=uvicorn.Server(uvicorn.Config(application,host='127.0.0.1',port=port,log_level='error',access_log=False))
+        thread=threading.Thread(target=lambda:server.run(sockets=[sock]),daemon=True);thread.start()
+        try:
+            for _ in range(100):
+                if server.started:break
+                time.sleep(.05)
+            assert server.started
+            with sync_playwright() as p:
+                browser=p.chromium.launch(channel='msedge',headless=True)
+                page=browser.new_page(viewport={'width':1440,'height':1000})
+                page.on('pageerror',lambda error:errors.append(str(error)))
+                page.goto(f'http://127.0.0.1:{port}')
+                expect(page.locator('#profile-select option')).to_have_count(3)
+                assert page.locator('#mode').count()==0 and page.locator('#example').count()==0
+                for pid,name in [('demo-ana-001','ANA'),('demo-carlos-002','CARLOS'),('demo-ana-001','ANA')]:
+                    page.select_option('#profile-select',pid);expect(page.locator('#profile-label')).to_contain_text(name)
+                checks.append('Repeated profile changes, no timeout; no sample selector')
+                page.fill('#input',CASE['input']);page.check('#consent')
+                page.select_option('#period-month','1')
+                page.click('#extract');page.wait_for_selector('#review:visible')
+                assert page.locator('#rows tr').count()==8
+                page.locator('#rows tr').nth(2).locator('.simulate').check()
                 page.check('#confirmed');page.click('#confirm');page.wait_for_selector('#result:visible')
-                assert page.locator('#total-expense').inner_text()
-                page.click('#restart');page.wait_for_selector('#entry:visible')
-            checks.append('All 11 examples traverse review and result')
-            page.select_option('#mode','live');assert not page.locator('#input').get_attribute('readonly')
-            page.click('#extract');expect(page.locator('#notice')).to_contain_text('Autoriza')
-            checks.append('Real provider requires explicit consent')
-            mobile=browser.new_page(viewport={'width':390,'height':844},device_scale_factor=1)
-            mobile.goto(base);expect(mobile.locator('#input')).not_to_have_value('')
-            assert mobile.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth')
-            mobile.screenshot(path=str(output/'04-movil.png'),full_page=True)
-            mobile.click('#extract');mobile.wait_for_selector('#review:visible')
-            assert mobile.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth')
-            mobile.check('#confirmed');mobile.click('#confirm');mobile.wait_for_selector('#result:visible')
-            assert mobile.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth')
-            checks.append('Mobile 390px entry, table scrolling, result without page overflow')
-            page.goto(base+'/pitch')
-            assert page.locator('.slide:visible').count()==1
-            page.keyboard.press('ArrowRight');assert page.locator('#page').inner_text()=='2 / 7'
-            page.click('#timer-toggle');page.wait_for_timeout(1200);assert page.locator('#timer').inner_text()!='06:00'
-            page.click('#timer-reset');assert page.locator('#timer').inner_text()=='06:00'
-            page.keyboard.press('ArrowLeft')
-            page.screenshot(path=str(output/'05-pitch.png'),full_page=True)
-            page.pdf(path=str(ROOT/'docs/SpendWiseAI_pitch.pdf'),landscape=True,print_background=True,prefer_css_page_size=True)
-            checks.append('Pitch navigation, timer and PDF export')
-            assert not errors, errors
-            browser.close()
-        hashes={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest() for path in [ROOT/'app.py',ROOT/'spendwise_service.py',ROOT/'tests/browser_smoke.py',*sorted((ROOT/'web').glob('*'))]}
-        (ROOT/'evals/browser_report.json').write_text(json.dumps({'timestamp_utc':datetime.now(timezone.utc).isoformat(),'source_sha256':hashes,'mode':'fixture','browser':'Microsoft Edge / Playwright','checks':checks,'console_errors':errors,'status':'PASS'},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-        print('Browser checks PASS:',len(checks))
-    finally:
-        server.shutdown();server.server_close();thread.join()
+                expect(page.locator('#total-balance')).to_contain_text('173.200')
+                expect(page.locator('#saving')).to_contain_text('30.000')
+                page.click('#save-budget');expect(page.locator('#notice')).to_contain_text('guardado')
+                checks.append('Job polling, extraction, human confirmation, savings and persistence')
+                page.click('[data-section="history"]');expect(page.locator('#history-rows tr')).to_have_count(1)
+                page.locator('#history-rows button').first.click();page.wait_for_selector('#budget-detail:visible')
+                expect(page.locator('#detail-balance')).to_contain_text('173.200')
+                page.click('#detail-edit');page.locator('.saved-amount').first.fill('850000')
+                page.click('#detail-save');expect(page.locator('#detail-balance')).to_contain_text('223.200')
+                checks.append('Stored budget editing recalculates and persists')
+                page.click('[data-section="register"]');page.click('#restart')
+                page.select_option('#period-month','2');page.fill('#input',CASE['input']);page.click('#extract')
+                page.wait_for_selector('#review:visible');page.check('#confirmed');page.click('#confirm')
+                page.wait_for_selector('#result:visible');page.click('#save-budget');expect(page.locator('#notice')).to_contain_text('guardado')
+                page.click('[data-section="compare"]');expect(page.locator('#compare-a option')).to_have_count(3)
+                options=page.locator('#compare-a option').all()
+                page.select_option('#compare-a',options[2].get_attribute('value'))
+                page.select_option('#compare-b',options[1].get_attribute('value'))
+                page.click('#run-compare');page.wait_for_selector('#compare-result:visible')
+                expect(page.locator('#compare-expense-diff')).to_contain_text('50.000')
+                page.check('#compare-consent');page.click('#explain-changes');page.wait_for_selector('#explanation-result:visible')
+                checks.append('Two-period comparison and async explanation')
+                page.click('[data-section="plan"]');expect(page.locator('#plan-budget option')).to_have_count(3)
+                bid=page.locator('#plan-budget option').nth(1).get_attribute('value')
+                page.select_option('#plan-budget',bid);page.fill('#plan-text','Liberar 100 pesos');page.check('#plan-consent')
+                page.click('#plan-interpret');page.wait_for_selector('#plan-assumptions:visible')
+                page.locator('.goal-reduction').first.fill('100');page.check('#plan-confirmed');page.click('#plan-calculate');page.wait_for_selector('#plan-result:visible')
+                expect(page.locator('#plan-result-content')).to_contain_text('Meta alcanzable')
+                checks.append('History detail and goal reductions are functional')
+                page.click('#plan-new');page.check('input[name="plan-type"][value="event"]')
+                page.fill('#plan-text','Viaje en bus');page.click('#plan-interpret');page.wait_for_selector('#plan-assumptions:visible')
+                page.locator('.plan-item-amt').first.fill('')
+                page.check('#plan-confirmed');page.click('#plan-calculate')
+                expect(page.locator('#notice')).to_contain_text('Completa todos los montos')
+                page.locator('.plan-item-amt').first.fill('100');page.check('#plan-confirmed');page.click('#plan-calculate');page.wait_for_selector('#plan-result:visible')
+                checks.append('Event estimation requires amounts and confirmation')
+                page.click('[data-section="register"]');page.click('#restart')
+                provider.delay=2
+                page.fill('#input',CASE['input']);page.click('#extract');page.wait_for_selector('#analysis-progress:visible')
+                page.click('[data-section="history"]');expect(page.locator('#history-rows tr')).to_have_count(2)
+                page.click('#cancel-analysis');expect(page.locator('#analysis-progress')).to_be_hidden()
+                checks.append('History remains responsive during AI; cancellation works')
+                page.click('[data-section="register"]');page.click('#extract');page.wait_for_selector('#analysis-progress:visible')
+                page.select_option('#profile-select','demo-carlos-002');expect(page.locator('#profile-label')).to_contain_text('CARLOS')
+                expect(page.locator('#input')).to_have_value('');expect(page.locator('#review')).to_be_hidden()
+                page.click('[data-section="history"]');expect(page.locator('#history-list')).to_be_hidden()
+                checks.append('Switching profile cancels old AI and clears private views')
+                page.click('[data-section="register"]')
+                page.screenshot(path=str(folder/'refactor-desktop.png'),full_page=True)
+                page.set_viewport_size({'width':390,'height':844})
+                assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth')
+                page.screenshot(path=str(folder/'refactor-mobile.png'),full_page=True)
+                checks.append('Desktop and mobile rendered')
+                assert not errors,errors
+                browser.close()
+        finally:
+            server.should_exit=True;thread.join(5);sock.close()
+    report={'timestamp_utc':datetime.now(timezone.utc).isoformat(),'mode':'test_provider_not_real_gemini','checks':checks,'console_errors':errors,'status':'PASS'}
+    (ROOT/'evals/browser_report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+    print('Browser PASS:',len(checks))
 
 if __name__=='__main__':main()
