@@ -1,84 +1,78 @@
-# Arquitectura de SpendWise AI
+﻿# Arquitectura actual de SpendWise AI
 
-## Canal elegido: web app local
-
-La entrega es una aplicación web accesible desde navegador y ejecutada con Python. Su objetivo es demostrar ingreso de texto, interpretación, revisión y resultado en seis minutos. Se eligió una interfaz HTML/CSS/JavaScript con servidor de biblioteca estándar porque arranca sin instalar paquetes y permite mostrar una tabla editable. Una app móvil requeriría empaquetado e instalación sin mejorar esta prueba; una API sola no haría visible la decisión humana. Gradio figuraba como dependencia del notebook anterior, pero no había interfaz implementada.
-
-## Flujo implementado
-
-## Flujo y Persistencia Implementada
+Actualizada para el refactor del 23 de septiembre de 2026. El notebook y los materiales de la presentación anterior se conservan como documentación académica; esta página y README describen la implementación actual.
 
 ```mermaid
 flowchart TD
-    U[Usuario: interfaz web] --> API[API local app.py]
-    API --> AUTH[Sesión de perfil demo]
-    API --> SERVICE[Servicio SpendWise]
-    SERVICE --> AGENT[Agente Gemini: extracción/explicación]
-    SERVICE --> CORE[Cálculo determinista compare/scenarios]
-    SERVICE --> DB[(SQLite data/spendwise.db)]
-    AGENT --> REVIEW[Revisión de persona]
-    CORE --> REVIEW
-    REVIEW -->|confirmación| DB
-    DB --> COMP[Comparador de periodos]
-    COMP --> CORE
-    COMP --> AGENT
-    DB --> SCEN[Servicio de escenarios]
-    SCEN --> CORE
-    U --> REVIEW
+    Browser[Interfaz: perfiles, análisis, historial y escenarios] --> API[FastAPI / Uvicorn]
+    API -->|Operaciones locales cortas| Repo[Conexión SQLite por operación]
+    Repo --> DB[(SQLite existente, WAL)]
+    API -->|POST: HTTP 202 + ID| Jobs[Trabajos asíncronos acotados]
+    Browser -->|GET estado / DELETE cancelar| Jobs
+    Jobs --> Client[HTTPX reutilizable]
+    Client --> Gemini[Gemini: extracción, explicación o interpretación]
+    Gemini --> Contracts[Validación del contrato]
+    Contracts --> Review[Resultado disponible para revisar]
+    Review --> Human[Persona corrige y confirma]
+    Human --> Core[Python: cálculos deterministas]
+    Core --> API
+    API --> Browser
 ```
 
-## Responsabilidades reales
+## Problema eliminado
 
-| Componente | Responsabilidad | Frontera |
-|---|---|---|
-| Navegador | Entrada, consentimiento, historial, comparación, escenarios | No recibe la API key ni decide cifras por sí solo |
-| `app.py` / API | Validar solicitudes, identificar perfil, llamar servicios | No confía en un profile_id del cliente sin validarlo |
-| Servicio de historial (`spendwise_storage`) | Crear, listar, leer y modificar presupuestos y perfiles en SQLite | No guarda antes de la confirmación humana explícita |
-| `spendwise_core` | Aritmética decimal, comparar meses, saldo, porcentaje y escenarios | No interpreta lenguaje natural ni inventa diferencias |
-| Agente Gemini | Extraer movimientos y explicar cambios deterministas proporcionados | No calcula montos ni ejecuta acciones financieras |
-| SQLite | Persistir perfiles, presupuestos, y movimientos de forma local | No almacena contraseñas (perfiles demo) ni es pública |
+El servidor anterior usaba `LOCK` al seleccionar perfil y llamaba dentro a `_get_active_profile`, que intentaba adquirir el mismo `threading.Lock`. Con una cookie activa, el hilo quedaba bloqueado indefinidamente. `service_actions` intentaba adquirir ese candado y podía detener el bucle de atención del servidor. Esto explica que operaciones sin IA también vencieran por timeout.
 
-## AI native y baseline sin IA
+Cambiar únicamente el tiempo máximo de espera no habría corregido ese bloqueo. Ahora sesiones y trabajos se gestionan en el event loop sin candados anidados. SQLite no comparte una única conexión entre solicitudes; las operaciones se ejecutan en el threadpool y cierran su conexión al terminar.
 
-La tarea del modelo es transformar descripciones variables en un inventario estructurado con citas. Ejemplo: “Me entraron 1.2 millones; pagué 50 mil de mercado y 12.500 de bus”. Sin el modelo, la persona debe separar montos y escoger categorías en un formulario o una hoja de cálculo. La hipótesis de valor es reducir ese esfuerzo sin aumentar errores finales; todavía debe medirse.
+## Fronteras
 
-La IA no aparece como un chat agregado al final: su salida alimenta el flujo de revisión y los cálculos. Una sola llamada es suficiente para la función central. Se retiró la generación libre de recomendaciones numéricas de la versión anterior para evitar ahorros sin soporte; el usuario elige un escenario y el código deriva cada cifra.
+| Capa | Responsabilidad |
+|---|---|
+| `web/api.js` | Peticiones breves, polling, cancelación, errores y respuestas obsoletas |
+| `web/app.js` | Edición, confirmación, navegación y visualización |
+| `spendwise_api.py` | Perfil/sesión, validación, rutas, acceso a datos y coordinación |
+| `spendwise_jobs.py` | Cola acotada, deadline, deduplicación y propiedad del resultado |
+| `spendwise_provider.py` | Conexiones HTTPX, API key, errores y parsing Gemini |
+| `spendwise_service.py` | Prompts, contratos, incertidumbre y revisión financiera |
+| `spendwise_core.py` | Montos decimales, totales, porcentaje y escenarios |
+| `spendwise_storage.py` | Persistencia en transacciones, sin llamar a Gemini |
+| `spendwise_compare.py` | Diferencias entre meses, sin llamar a Gemini |
 
-## Contratos y unidades
+La extracción, explicación y planificación llaman al mismo transporte; ya no hay tres implementaciones HTTP duplicadas. El adaptador síncrono se conserva para notebook y evals, pero el servidor usa el cliente asíncrono persistente.
 
-Entrada: texto de un mismo periodo, hasta 12.000 caracteres. Se permiten hasta 100 movimientos. Moneda base COP; montos finitos no negativos y hasta dos decimales. Ingreso ausente es `null`; no se transforma en cero.
+## Presupuesto de latencia
 
-Extracción: `ingreso_total`, `fuente_ingreso`, `movimientos`, `incidencias`. Cada movimiento tiene descripción, monto nullable, categoría nullable, moneda, tipo expense/refund y cita literal. El servidor asigna IDs de sesión; no confía en IDs del modelo.
+- Solicitud local del navegador: hasta 8 segundos; normalmente mucho menos.
+- Conexión con proveedor: 5 segundos; lectura: 25 segundos.
+- Trabajo de IA: máximo total 40 segundos, incluyendo cola y reintento.
+- Polling: cada 700 ms. La respuesta al POST es 202 y no espera la generación.
+- Límite: dos ejecuciones Gemini concurrentes, ocho trabajos activos y dos por sesión.
+- Un reintento para 502/503/504 con pausa de 0,5 s, siempre dentro del deadline.
+- Sin reintento automático para cuota, clave, esquema o respuesta truncada.
 
-Salida financiera: los once campos definidos en `spendwise_core.REQUIRED_FIELDS`. La respuesta de aplicación envuelve ese output con movimientos confirmados, IDs corregidos/excluidos y metadatos del modo usado. Ese envoltorio no altera el contrato financiero.
+Estos son límites de espera, no promesas de duración de Gemini. Se mide tiempo local con `Server-Timing`; el resultado del proveedor incluye latencia, intentos y uso de tokens cuando Gemini los informa. El benchmark usa un proveedor demorado de prueba y no se extrapola a la nube.
 
-```text
-gasto_total = suma de valores de movimientos incluidos
-saldo_disponible = ingreso_total - gasto_total (o null sin ingreso)
-porcentaje_gastado = round_half_up(gasto_total / ingreso_total * 100, 2)
-ahorro_potencial = suma de reducciones de 10% seleccionadas por el usuario
-```
+## Perfiles, persistencia y revisión
 
-Porcentaje `null` con ingreso cero o ausente. `Decimal` evita artefactos de sumar floats, y el redondeo explícito hace reproducibles los resultados. No hay conversiones de moneda ni conciliación de devoluciones.
+Una cookie HttpOnly/SameSite identifica la sesión local. El perfil se resuelve en el servidor. Cambiarlo cancela trabajos, invalida revisiones y limpia las vistas; una respuesta tardía del perfil anterior se descarta. Las lecturas/escrituras filtran por propietario.
 
-## Incertidumbre
+Los presupuestos existentes se conservan. SQLite usa WAL y conexión por operación. El reemplazo de un mes modifica sus movimientos dentro de una transacción, manteniendo ID y datos anteriores si se produce un error.
 
-- Monto faltante: fila visible excluida inicialmente; completar monto e incluir o aceptar resumen parcial.
-- Duplicados por descripción normalizada: excluir inicialmente ambos; la persona puede incluir uno o confirmar que son distintos.
-- Categoría desconocida: preservar monto en `otros`, mostrar incidencia y pedir revisión.
-- Moneda extranjera o devolución: no permitir inclusión directa; corregir la entrada después de conciliación externa.
-- Ingreso faltante: pedir dato o aceptar saldo/porcentaje no disponibles.
-- Saldo negativo: advertir; no recomendar préstamos ni inversiones.
-- Respuesta malformada, sin citas o error del proveedor: bloquear y explicar.
+Las revisiones permanecen en memoria durante la sesión; los presupuestos guardados permanecen en disco. No hay cuentas autenticadas: los perfiles seleccionables son una separación local, no una garantía de acceso privado entre personas que usen la misma máquina.
 
-Se añaden señales conservadoras para frases como “no recuerdo cuánto”, “me devolvieron” y “no recuerdo qué compré”, incluso si la extracción omitió la incidencia. Estas señales no sustituyen comprensión semántica. Duplicados con descripciones distintas, magnitudes mal interpretadas y omisiones sin esas frases siguen siendo riesgos; la revisión de todos los movimientos es obligatoria.
+## Escenarios y comparaciones
 
-## Estado, seguridad y operación
+Las diferencias entre meses se calculan en Python. Gemini recibe una comparación reconstruida desde los presupuestos del servidor, no cifras arbitrarias enviadas por el navegador. Los movimientos ambiguos se muestran sin asumir que existen ambos lados de la coincidencia.
 
-API key solo en el proceso servidor; API local enlazada a loopback. Sesiones aleatorias en memoria, máximo 100, TTL 30 minutos con limpieza periódica y borrado explícito. Origen/Host verificados; JSON obligatorio; rutas estáticas en lista permitida; CSP; texto del modelo renderizado como texto, nunca HTML. Entradas no se escriben a logs. Un error no activa simulación automáticamente.
+Las metas permiten editar objetivo y reducciones por movimiento. El servidor obtiene montos originales desde SQLite y rechaza reducciones que excedan el gasto. Los eventos exigen montos explícitos: vacío no significa cero. Ambos requieren confirmación de supuestos antes del cálculo. Los escenarios no se guardan como gasto confirmado ni alteran el presupuesto base.
 
-No hay despliegue público, autenticación, multiusuario real, cifrado de almacenamiento ni acceso bancario. Antes de producción se requieren estas decisiones, revisión de privacidad, límites de consumo, monitoreo y validación representativa. La retención de Gemini no está controlada por el servidor local.
+La explicación en lenguaje natural sigue siendo una interpretación susceptible de error. Se validan estructura, IDs y tipos; la exactitud semántica de cada frase requiere revisión.
 
-## Evidencia
+## Compatibilidad y alcance
 
-`evals/results.md` distingue histórico, pruebas offline y evaluación real pendiente. `python verify.py` reproduce gates técnicos; `python -m evals.run_evals --live --ask-key --repeat 3` ejecuta el nuevo pipeline contra Gemini. Los reportes incluyen hashes y prompt versionado. Los fixtures no prueban precisión del modelo.
+La UI y la API ya no ofrecen datos simulados. Los fixtures se mantienen fuera del producto en `evals/` y `tests/`. No hay fallback silencioso a ejemplos.
+
+Se preserva SQLite y el arranque `python app.py --ask-key`. Hay nuevas dependencias: FastAPI, Uvicorn, HTTPX y Pydantic. Después de actualizar, detener el servidor viejo, instalar `requirements.txt`, reiniciar y recargar el navegador.
+
+El gestor de trabajos vive en un solo proceso. Se ejecuta con un worker; múltiples workers o despliegue distribuido requerirían un almacén de sesiones/cola compartido. No se añadió Redis, una base remota ni servicios que compliquen innecesariamente la demostración local.

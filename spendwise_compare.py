@@ -48,7 +48,7 @@ def _match_movements(movements_a, movements_b):
     
     all_norms = set(groups_a.keys()) | set(groups_b.keys())
     
-    for norm in all_norms:
+    for norm in sorted(all_norms):
         list_a = groups_a.get(norm, [])
         list_b = groups_b.get(norm, [])
         
@@ -152,9 +152,11 @@ def compare_budgets(budget_a, budget_b):
     expense_b = float(expense_b_dec)
     expense_diff = float(expense_b_dec - expense_a_dec)
     
-    balance_a = income_a - expense_a if income_a is not None else None
-    balance_b = income_b - expense_b if income_b is not None else None
-    balance_diff = balance_b - balance_a if balance_a is not None and balance_b is not None else None
+    balance_a_dec = money(income_a) - expense_a_dec if income_a is not None else None
+    balance_b_dec = money(income_b) - expense_b_dec if income_b is not None else None
+    balance_a = float(balance_a_dec) if balance_a_dec is not None else None
+    balance_b = float(balance_b_dec) if balance_b_dec is not None else None
+    balance_diff = float(balance_b_dec-balance_a_dec) if balance_a_dec is not None and balance_b_dec is not None else None
     
     category_diffs = {}
     for cat in CATEGORIES:

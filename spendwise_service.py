@@ -3,11 +3,7 @@ import copy
 import json
 import os
 import re
-import socket
-import time
 import unicodedata
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 from spendwise_core import CATEGORIES, money, build_output
 
 MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
@@ -41,35 +37,12 @@ EXTRACTION_SCHEMA = {
       'detalle':{'type':'string'},'fuente':{'type':'string'}}}}
  }}
 
-class ProviderError(RuntimeError):
-    pass
+from spendwise_provider import ProviderError, generate_sync
+
 
 def call_gemini(text):
-    key = os.getenv('GEMINI_API_KEY')
-    if not key: raise ProviderError('Falta GEMINI_API_KEY en el servidor. Usa ensayo o configura la clave.')
-    if not re.fullmatch(r'[a-zA-Z0-9._-]+', MODEL): raise ProviderError('GEMINI_MODEL no es valido.')
-    payload = {'systemInstruction':{'parts':[{'text':EXTRACTION_PROMPT}]},
-       'contents':[{'role':'user','parts':[{'text':json.dumps({'texto_no_confiable':text},ensure_ascii=False)}]}],
-       'generationConfig':{'temperature':0,'maxOutputTokens':8192,
-                           'responseMimeType':'application/json','responseJsonSchema':EXTRACTION_SCHEMA}}
-    req = Request(f'https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent',
-                  data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':key})
-    start = time.perf_counter()
-    try:
-        with urlopen(req, timeout=40) as response: raw=json.load(response)
-        candidate=raw.get('candidates',[])[0]
-        if candidate.get('finishReason') != 'STOP': raise ProviderError('Gemini no completo la respuesta. Vuelve a intentar.')
-        parts=candidate['content']['parts']
-        result=json.loads(''.join(p.get('text','') for p in parts if not p.get('thought')))
-        return result, {'mode':'live','model':MODEL,'prompt_version':PROMPT_VERSION,
-                        'latency_ms':round((time.perf_counter()-start)*1000), 'usage':raw.get('usageMetadata',{})}
-    except HTTPError as exc:
-        messages={400:'Solicitud o esquema rechazado por Gemini.',401:'Clave no autorizada.',403:'Clave sin permisos.',404:'Modelo no disponible. Configura GEMINI_MODEL.',429:'Cuota agotada. Espera antes de reintentar.',503:'Gemini no disponible temporalmente.'}
-        raise ProviderError(messages.get(exc.code,f'Gemini respondio HTTP {exc.code}.')) from None
-    except (URLError, socket.timeout, TimeoutError):
-        raise ProviderError('No se pudo conectar con Gemini en el tiempo disponible. Reintenta.') from None
-    except (ValueError, KeyError, IndexError, TypeError):
-        raise ProviderError('Gemini devolvio una respuesta invalida. No se genero un presupuesto.') from None
+    return _call_gemini_structured(EXTRACTION_PROMPT, EXTRACTION_SCHEMA,
+                                  {"texto_no_confiable": text}, PROMPT_VERSION)
 
 def folded(s):
     return ''.join(c for c in unicodedata.normalize('NFD',s.lower()) if unicodedata.category(c)!='Mn')
@@ -227,24 +200,7 @@ EXPLANATION_SCHEMA = {
     }
 }
 
-def explain_comparison(comparison_result, movements_a, movements_b):
-    """Ask the model to explain calculated differences using movement evidence.
-
-    Args:
-        comparison_result: dict from spendwise_compare.compare_budgets()
-        movements_a: list of movement dicts from period A
-        movements_b: list of movement dicts from period B
-
-    Returns: (explanation_dict, metadata_dict)
-    Raises: ProviderError on model failure, ValueError on invalid response.
-    """
-    key = os.getenv('GEMINI_API_KEY')
-    if not key:
-        raise ProviderError('Falta GEMINI_API_KEY en el servidor.')
-    if not re.fullmatch(r'[a-zA-Z0-9._-]+', MODEL):
-        raise ProviderError('GEMINI_MODEL no es valido.')
-
-    # Build context with only the data the model needs
+def comparison_context(comparison_result, movements_a, movements_b):
     context = {
         'periodo_a': comparison_result.get('period_a'),
         'periodo_b': comparison_result.get('period_b'),
@@ -259,40 +215,13 @@ def explain_comparison(comparison_result, movements_a, movements_b):
         'advertencias': comparison_result.get('warnings',[]),
     }
 
-    payload = {
-        'systemInstruction':{'parts':[{'text':EXPLANATION_PROMPT}]},
-        'contents':[{'role':'user','parts':[{'text':json.dumps(context, ensure_ascii=False)}]}],
-        'generationConfig':{'temperature':0,'maxOutputTokens':4096,
-                            'responseMimeType':'application/json','responseJsonSchema':EXPLANATION_SCHEMA}
-    }
-    req = Request(
-        f'https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent',
-        data=json.dumps(payload).encode(),
-        headers={'Content-Type':'application/json','x-goog-api-key':key}
-    )
-    start = time.perf_counter()
-    try:
-        with urlopen(req, timeout=40) as response:
-            raw = json.load(response)
-        candidate = raw.get('candidates',[])[0]
-        if candidate.get('finishReason') != 'STOP':
-            raise ProviderError('Gemini no completo la explicación. Vuelve a intentar.')
-        parts = candidate['content']['parts']
-        result = json.loads(''.join(p.get('text','') for p in parts if not p.get('thought')))
-    except HTTPError as exc:
-        messages = {400:'Solicitud rechazada.',429:'Cuota agotada.',503:'Gemini no disponible.'}
-        raise ProviderError(messages.get(exc.code, f'Gemini HTTP {exc.code}.')) from None
-    except (URLError, socket.timeout, TimeoutError):
-        raise ProviderError('No se pudo conectar con Gemini para la explicación.') from None
-    except (ValueError, KeyError, IndexError, TypeError):
-        raise ProviderError('Gemini devolvio una explicación invalida.') from None
+    return context
 
-    metadata = {'mode':'live','model':MODEL,'prompt_version':EXPLANATION_PROMPT_VERSION,
-                'latency_ms':round((time.perf_counter()-start)*1000),'usage':raw.get('usageMetadata',{})}
 
-    # Validate the explanation
-    valid_ids = {m['id'] for m in movements_a} | {m['id'] for m in movements_b}
-    _validate_explanation(result, valid_ids)
+def explain_comparison(comparison_result, movements_a, movements_b):
+    result, metadata = _call_gemini_structured(EXPLANATION_PROMPT, EXPLANATION_SCHEMA,
+        comparison_context(comparison_result, movements_a, movements_b), EXPLANATION_PROMPT_VERSION)
+    _validate_explanation(result, {m['id'] for m in movements_a + movements_b})
     return result, metadata
 
 
@@ -317,6 +246,7 @@ def _validate_explanation(explanation, valid_movement_ids):
             raise ValueError('Explicación demasiado larga o inválida.')
         if not isinstance(o['movement_ids'], list):
             raise ValueError('movement_ids debe ser una lista.')
+        money(o['diferencia_calculada'])
         for mid in o['movement_ids']:
             if mid not in valid_movement_ids:
                 raise ValueError(f'La observación cita un movimiento inexistente: {mid}')
@@ -378,41 +308,7 @@ EVENT_SCHEMA = {
 
 
 def _call_gemini_structured(prompt_text, schema, user_content, prompt_version):
-    """Generic helper: send structured request to Gemini and return parsed result + metadata."""
-    key = os.getenv('GEMINI_API_KEY')
-    if not key:
-        raise ProviderError('Falta GEMINI_API_KEY en el servidor.')
-    if not re.fullmatch(r'[a-zA-Z0-9._-]+', MODEL):
-        raise ProviderError('GEMINI_MODEL no es valido.')
-    payload = {
-        'systemInstruction':{'parts':[{'text':prompt_text}]},
-        'contents':[{'role':'user','parts':[{'text':json.dumps(user_content, ensure_ascii=False)}]}],
-        'generationConfig':{'temperature':0,'maxOutputTokens':4096,
-                            'responseMimeType':'application/json','responseJsonSchema':schema}
-    }
-    req = Request(
-        f'https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent',
-        data=json.dumps(payload).encode(),
-        headers={'Content-Type':'application/json','x-goog-api-key':key}
-    )
-    start = time.perf_counter()
-    try:
-        with urlopen(req, timeout=40) as response:
-            raw_resp = json.load(response)
-        candidate = raw_resp.get('candidates',[])[0]
-        if candidate.get('finishReason') != 'STOP':
-            raise ProviderError('Gemini no completó la respuesta.')
-        parts = candidate['content']['parts']
-        result = json.loads(''.join(p.get('text','') for p in parts if not p.get('thought')))
-        meta = {'mode':'live','model':MODEL,'prompt_version':prompt_version,
-                'latency_ms':round((time.perf_counter()-start)*1000),'usage':raw_resp.get('usageMetadata',{})}
-        return result, meta
-    except HTTPError as exc:
-        raise ProviderError(f'Gemini respondió HTTP {exc.code}.') from None
-    except (URLError, socket.timeout, TimeoutError):
-        raise ProviderError('No se pudo conectar con Gemini.') from None
-    except (ValueError, KeyError, IndexError, TypeError):
-        raise ProviderError('Gemini devolvió una respuesta inválida.') from None
+    return generate_sync(prompt_text, schema, user_content, prompt_version, MODEL)
 
 
 def interpret_goal(text, budget_summary):

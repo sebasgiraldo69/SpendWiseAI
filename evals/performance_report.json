@@ -1,0 +1,39 @@
+{
+  "timestamp_utc": "2026-09-23T15:25:42.839801+00:00",
+  "mode": "in-process HTTP test client, temporary SQLite, provider delayed 2 seconds; NOT real Gemini latency",
+  "baseline": {
+    "reproduced": true,
+    "observation_window_ms": 250,
+    "pattern": "LOCK held by select -> _get_active_profile acquires the same non-reentrant LOCK"
+  },
+  "job_accepted_ms": 1.53,
+  "measurements": {
+    "profile_select_ms": {
+      "samples": 30,
+      "median_ms": 2.7,
+      "p95_ms": 3.69,
+      "max_ms": 7.42
+    },
+    "history_during_ai_ms": {
+      "samples": 15,
+      "median_ms": 2.43,
+      "p95_ms": 2.94,
+      "max_ms": 3.23
+    },
+    "health_during_ai_ms": {
+      "samples": 15,
+      "median_ms": 0.81,
+      "p95_ms": 0.99,
+      "max_ms": 1.2
+    }
+  },
+  "source_sha256": {
+    "spendwise_api.py": "81da83efab479c3e5d1e8d22a31288bd57da75686f6734e8471d2aaf57e30fed",
+    "spendwise_compare.py": "a74d86ffecd4439069df044df6333909507148ed5b8925b8744c2ffa244c9a6e",
+    "spendwise_core.py": "25317c6d68caa44244778029dbf3732275a13c7603e5fe5de4d1171ccff5d2f4",
+    "spendwise_jobs.py": "fdfb6ee20bb2ebc6746d6b269adaa499f853909265fa7a72ea1c186b4491a9da",
+    "spendwise_provider.py": "31b0e7f559f5a0abe5fe9cd0c943d080e68cf8b536d32d74ea800f7c86114aae",
+    "spendwise_service.py": "0b4d51928b2ba5359dabfbddd65ccdcb631460fce74c1e582688b184cb936c0b",
+    "spendwise_storage.py": "7cdc43ac165a6dc1f61bbbd20a7ae7060c5183b541e412c26916204fc5d7be5e"
+  }
+}

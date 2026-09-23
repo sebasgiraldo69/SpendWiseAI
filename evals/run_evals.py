@@ -51,7 +51,7 @@ def run_suite(live=False, repeat=1):
             except Exception as exc:
                 results.append({'case':case['id'],'iteration':iteration+1,'status':'ERROR','errors':[str(exc)]})
             if live: time.sleep(1)
-    paths=['spendwise_core.py','spendwise_service.py','evals/run_evals.py','evals/eval_cases.json','evals/extraction_fixtures.json']
+    paths=['spendwise_core.py','spendwise_service.py','spendwise_provider.py','evals/run_evals.py','evals/eval_cases.json','evals/extraction_fixtures.json']
     return {'timestamp_utc':datetime.now(timezone.utc).isoformat(),'mode':'live' if live else 'fixture',
             'meaning':'Real Gemini extraction + deterministic checks' if live else 'Software checks with hand-annotated extraction; does NOT measure Gemini quality',
             'model':MODEL if live else None,'prompt_version':PROMPT_VERSION,'repeat':repeat,

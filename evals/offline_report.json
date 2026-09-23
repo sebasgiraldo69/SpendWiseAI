@@ -1,14 +1,15 @@
 {
-  "timestamp_utc": "2026-09-22T16:57:35.224843+00:00",
+  "timestamp_utc": "2026-09-23T15:30:54.939217+00:00",
   "mode": "fixture",
   "meaning": "Software checks with hand-annotated extraction; does NOT measure Gemini quality",
   "model": null,
   "prompt_version": "spendwise-extraction-v3",
   "repeat": 1,
   "source_sha256": {
-    "spendwise_core.py": "dae8d7077276b4f76103edd396dfe885bf544edddf76aba8ad555c8b695f8823",
-    "spendwise_service.py": "3a1b93b8e1a2877ec81aa07b1701a565d3f4b487e6bf96f809bf8ece979f2f3f",
-    "evals/run_evals.py": "4dea3288bb5b6efa995dc2a45b4dd484016cf7edc0677e200038e0fd21bbff28",
+    "spendwise_core.py": "25317c6d68caa44244778029dbf3732275a13c7603e5fe5de4d1171ccff5d2f4",
+    "spendwise_service.py": "0b4d51928b2ba5359dabfbddd65ccdcb631460fce74c1e582688b184cb936c0b",
+    "spendwise_provider.py": "aeb1dc5fc8b39a4733dec8febcaa0630cfec088a677ed01a2f375d6b3e2f217e",
+    "evals/run_evals.py": "d2d29f70affab4b7ef8361da3680667a8e06ae2ee773b3f26bdd82587e317819",
     "evals/eval_cases.json": "873d134ddb5ee66fd9d0cd0379d2247ad981603bfb918e1e59bfad5ff9e1e01b",
     "evals/extraction_fixtures.json": "9063977bc82ad20d0042345c85650054d21689f47c75b0f3cdb33357c148900c"
   },
@@ -122,7 +123,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 1
+      "latency_ms": 7
     },
     {
       "case": "budget_missing_income",
@@ -193,7 +194,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_duplicate_ambiguous_rent",
@@ -265,7 +266,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_prompt_injection",
@@ -318,7 +319,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_negative_balance_guardrail",
@@ -389,7 +390,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_zero_income",
@@ -444,7 +445,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_colloquial_number_formats",
@@ -505,7 +506,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 2
     },
     {
       "case": "budget_mixed_currencies",
@@ -568,7 +569,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 1
     },
     {
       "case": "budget_expense_without_amount",
@@ -631,7 +632,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 1
     },
     {
       "case": "budget_refund_negative_value",
@@ -695,7 +696,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 1
     },
     {
       "case": "budget_ambiguous_category",
@@ -750,7 +751,7 @@
         "model": null,
         "prompt_version": "spendwise-extraction-v3"
       },
-      "latency_ms": 0
+      "latency_ms": 1
     }
   ]
 }

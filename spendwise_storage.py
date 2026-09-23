@@ -22,6 +22,8 @@ def get_connection(path=None):
     conn = sqlite3.connect(db_file, timeout=5, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 1500")
     return conn
 
 def initialize_database(conn=None):
@@ -277,3 +279,13 @@ def delete_budget(conn, budget_id, profile_id):
     with conn:
         cursor = conn.execute("DELETE FROM budgets WHERE id = ? AND profile_id = ?", (budget_id, profile_id))
         return cursor.rowcount > 0
+
+
+def save_budget(conn, profile_id, year, month, income, movements, source_mode, replace=False):
+    """Replace in one transaction, preserving the existing ID and data on failure."""
+    existing = budget_exists(conn, profile_id, year, month)
+    if existing:
+        if not replace:
+            raise FileExistsError('Ya existe un presupuesto para ese mes.')
+        return update_budget(conn, existing, profile_id, income, movements)
+    return create_budget(conn, profile_id, year, month, income, movements, source_mode)
