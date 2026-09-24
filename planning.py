@@ -62,11 +62,10 @@ def respond(req, budget):
                               'amount': m['amount'], 'category': m['category']} for m in budget['movements']],
                'resumen_calculado': summary} if budget else None,
                'conversacion': [m.model_dump() for m in req.history], 'mensaje_actual': req.text}
-    with services.get_genai_client() as client:
-        interaction = client.interactions.create(
-            model=services.MODEL_NAME, input=json.dumps(context, ensure_ascii=False),
-            system_instruction=INSTRUCTION, store=False, timeout=35,
-            response_format={'type': 'text', 'mime_type': 'application/json', 'schema': Answer.model_json_schema()})
+    interaction = services.generate_structured(
+        model=services.MODEL_NAME, input=json.dumps(context, ensure_ascii=False),
+        system_instruction=INSTRUCTION,
+        response_format={'schema': Answer.model_json_schema()})
     answer = Answer.model_validate_json(interaction.output_text)
     proposal = calculate_proposal(answer, budget, summary)
     return {'reply': answer.reply, 'proposal': proposal, 'summary': summary,

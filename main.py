@@ -1,4 +1,5 @@
 import secrets
+import logging
 import time
 from typing import Dict, Tuple
 from fastapi import FastAPI, HTTPException, Request
@@ -7,6 +8,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load the configured model before services reads OPENAI_MODEL.
+load_dotenv()
+from ai_provider import ProviderFailure
 
 from models import (
     ExtractRequest, ConfirmRequest, ForgetRequest, BudgetCreateRequest, BudgetUpdateRequest,
@@ -19,11 +25,34 @@ from services import (
     extract_budget_from_text, prepare_review, build_output, compare_budgets, explain_comparison,
     interpret_scenario, calculate_goal_scenario, calculate_event_scenario, MODEL_NAME
 )
-from dotenv import load_dotenv
-
-load_dotenv()
-
 app = FastAPI(title="SpendWiseAI")
+
+
+def ai_failure(exc):
+    """Safe diagnostic metadata; never log request content or exception bodies."""
+    if isinstance(exc, ProviderFailure):
+        logging.getLogger('spendwise.ai').warning('AI failure code=%s model=%s', exc.code, MODEL_NAME)
+        return JSONResponse(status_code=503, content={'error': str(exc), 'code': exc.code})
+    kind = type(exc).__name__
+    status = getattr(exc, 'status_code', None) or getattr(exc, 'code', None)
+    if not isinstance(status, int):
+        status = None
+    logging.getLogger('spendwise.ai').warning('AI failure type=%s status=%s model=%s', kind, status, MODEL_NAME)
+    if 'Timeout' in kind:
+        code, message = 'provider_timeout', 'OpenAI no respondió en el tiempo disponible. Tu texto se conserva para reintentar.'
+    elif status in (401, 403):
+        code, message = 'provider_auth', 'OpenAI rechazó el acceso. Revisa la clave y los permisos del proyecto.'
+    elif status == 429:
+        code, message = 'provider_quota', 'OpenAI indicó un límite de cuota. Revisa la cuota del proyecto.'
+    elif status in (400, 404):
+        code, message = 'provider_request', 'OpenAI rechazó el modelo o el formato de la solicitud. Revisa el diagnóstico del servidor.'
+    elif status and status >= 500:
+        code, message = 'provider_unavailable', 'OpenAI devolvió un error de servidor. Tu texto se conserva para reintentar.'
+    elif 'Connection' in kind:
+        code, message = 'provider_connection', 'No se pudo conectar con OpenAI. Tu texto se conserva.'
+    else:
+        code, message = 'ai_internal', 'No se pudo procesar la respuesta. Revisa el diagnóstico del servidor.'
+    return JSONResponse(status_code=503, content={'error': message, 'code': code})
 
 ROOT = Path(__file__).resolve().parent
 
@@ -49,7 +78,7 @@ def get_config():
         {"id": "c2", "input": "Pagué la luz 80000, internet 100000. Salí a comer y gasté 150000."},
     ]
     return {
-        "live_available": bool(os.getenv("GEMINI_API_KEY")),
+        "live_available": bool(os.getenv("OPENAI_API_KEY")),
         "model": MODEL_NAME,
         "examples": examples
     }
@@ -64,21 +93,21 @@ def extract(req: ExtractRequest):
     try:
         if req.mode == "live":
             if not req.consent:
-                raise ValueError("Autoriza el envio del texto a Gemini.")
+                raise ValueError("Autoriza el envio del texto a OpenAI.")
             raw = extract_budget_from_text(req.input)
             meta = {"mode": "live", "model": MODEL_NAME}
         else:
-            # Handle fixture minimally or just fall back to live
-            raw = extract_budget_from_text(req.input)
-            meta = {"mode": "fixture"}
+            raise ValueError('Selecciona interpretación real y autoriza el envío.')
             
         review = prepare_review(raw, req.input, meta)
         token = secrets.token_urlsafe(32)
         prune_sessions()
         SESSIONS[token] = (time.monotonic(), review)
         return {"token": token, **review}
+    except ValueError:
+        return JSONResponse(status_code=400, content={'error': 'Revisa el consentimiento y los datos de la interpretación.'})
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return ai_failure(e)
 
 @app.post("/api/confirm")
 def confirm(req: ConfirmRequest):
@@ -225,7 +254,7 @@ from planning import ChatRequest, respond as respond_to_plan
 @app.post('/api/plan/chat')
 def plan_chat(req: ChatRequest):
     if not req.consent:
-        return JSONResponse(status_code=400, content={'error': 'Autoriza enviar la conversación y el presupuesto a Gemini.'})
+        return JSONResponse(status_code=400, content={'error': 'Autoriza enviar la conversación y el presupuesto a OpenAI.'})
     if not req.text.strip():
         return JSONResponse(status_code=400, content={'error': 'Escribe un mensaje.'})
     budget = get_budget(req.budget_id) if req.budget_id else None
@@ -235,8 +264,13 @@ def plan_chat(req: ChatRequest):
         return respond_to_plan(req, budget)
     except ValueError:
         return JSONResponse(status_code=502, content={'error': 'La propuesta no pasó la validación. Puedes volver a enviar tu mensaje.'})
-    except Exception:
-        return JSONResponse(status_code=503, content={'error': 'Gemini no pudo responder ahora. Tu conversación se conserva; puedes reintentar.'})
+    except Exception as exc:
+        return ai_failure(exc)
+
+
+@app.exception_handler(ProviderFailure)
+async def provider_exception_handler(request, exc):
+    return ai_failure(exc)
 
 
 # Fallback for static files and frontend

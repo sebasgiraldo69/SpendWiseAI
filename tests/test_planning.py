@@ -31,17 +31,14 @@ class PlanningTests(unittest.TestCase):
         self.assertIsNone(result['remaining'])
 
     def test_followup_and_budget_reach_provider(self):
-        client=MagicMock()
-        client.__enter__.return_value=client
-        client.interactions.create.return_value=SimpleNamespace(output_text=json.dumps({'reply':'Mantengamos transporte sin cambios.','reductions':[],'event_items':[]}))
+        response=SimpleNamespace(output_text=json.dumps({'reply':'Mantengamos transporte sin cambios.','reductions':[],'event_items':[]}))
         req=ChatRequest(text='No puedo reducir transporte',history=[{'role':'user','content':'Quiero ahorrar'}],consent=True)
-        with patch('services.get_genai_client',return_value=client):
+        with patch('services.generate_structured',return_value=response) as provider:
             result=respond(req,BUDGET)
-        kwargs=client.interactions.create.call_args.kwargs
+        kwargs=provider.call_args.kwargs
         context=json.loads(kwargs['input'])
         self.assertEqual(context['conversacion'][0]['content'],'Quiero ahorrar')
         self.assertEqual(context['presupuesto']['resumen_calculado']['saldo_disponible'],900)
-        self.assertFalse(kwargs['store'])
         self.assertIn('transporte',result['reply'])
 
     def test_api_consent_budget_and_error(self):
